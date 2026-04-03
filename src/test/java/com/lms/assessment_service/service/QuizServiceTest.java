@@ -98,4 +98,30 @@ public class QuizServiceTest {
         assertEquals(true, resultAttempt.getAnswers().get(0).getIsCorrect());
         assertEquals(false, resultAttempt.getAnswers().get(1).getIsCorrect());
     }
+
+    @Test
+    void testGetQuizById_Success() {
+        // Arrange
+        when(quizRepository.findById(1L)).thenReturn(Optional.of(mockQuiz));
+
+        // Act
+        Quiz retrievedQuiz = quizService.getQuizById(1L);
+
+        // Assert
+        assertNotNull(retrievedQuiz);
+        assertEquals(1L, retrievedQuiz.getId());
+        assertEquals(2, retrievedQuiz.getQuestions().size());
+    }
+
+    @Test
+    void testDeleteQuiz_Success() {
+        // Arrange
+        when(quizRepository.findById(1L)).thenReturn(Optional.of(mockQuiz));
+
+        // Act
+        quizService.deleteQuiz(1L);
+
+        // Assert
+        org.mockito.Mockito.verify(quizRepository, org.mockito.Mockito.times(1)).delete(mockQuiz);
+    }
 }
