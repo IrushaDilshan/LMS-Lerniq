@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/quizzes")
+@RequestMapping("/api/v1/quizzes")
 public class QuizController {
 
     private final QuizService quizService;
@@ -34,4 +34,33 @@ public class QuizController {
         QuizAttempt attempt = quizService.submitQuizAttempt(quizId, dto);
         return new ResponseEntity<>(attempt, HttpStatus.CREATED);
     }
-}
+
+    // --- NEW: App Retrieval & Management ---
+
+    // Get all quizzes for a specific course
+    @GetMapping("/courses/{courseId}")
+    public ResponseEntity<java.util.List<Quiz>> getQuizzesForCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(quizService.getQuizzesByCourse(courseId));
+    }
+
+    // Get a specific quiz's details
+    @GetMapping("/{quizId}")
+    public ResponseEntity<Quiz> getQuizById(@PathVariable Long quizId) {
+        return ResponseEntity.ok(quizService.getQuizById(quizId));
+    }
+
+    // Update a quiz
+    @PutMapping("/{quizId}")
+    public ResponseEntity<Quiz> updateQuiz(
+            @PathVariable Long quizId,
+            @RequestBody QuizCreateDto dto) {
+        return ResponseEntity.ok(quizService.updateQuiz(quizId, dto));
+    }
+
+    // Delete a quiz
+    @DeleteMapping("/{quizId}")
+    public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
+        quizService.deleteQuiz(quizId);
+        return ResponseEntity.noContent().build();
+    }
+} 
