@@ -2,6 +2,7 @@ package com.lms.assessment_service.service;
 
 import com.lms.assessment_service.dto.AssignmentCreateDto;
 import com.lms.assessment_service.dto.AssignmentGradeDto;
+import com.lms.assessment_service.exception.ResourceNotFoundException;
 import com.lms.assessment_service.model.Assignment;
 import com.lms.assessment_service.model.AssignmentSubmission;
 import com.lms.assessment_service.repository.AssignmentRepository;
@@ -38,7 +39,7 @@ public class AssignmentService {
     @Transactional
     public AssignmentSubmission submitAssignment(Long assignmentId, Long userId, MultipartFile file) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found with ID: " + assignmentId));
                 
         // Store the file using our generic filesystem component
         String filePath = fileStorageService.storeFile(file, assignmentId, userId);
@@ -54,7 +55,7 @@ public class AssignmentService {
     @Transactional
     public AssignmentSubmission gradeAssignment(Long submissionId, AssignmentGradeDto dto) {
         AssignmentSubmission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new RuntimeException("Submission not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found with ID: " + submissionId));
                 
         submission.setGrade(dto.getGrade());
         submission.setFeedback(dto.getFeedback());

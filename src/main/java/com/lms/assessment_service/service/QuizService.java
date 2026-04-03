@@ -4,6 +4,7 @@ import com.lms.assessment_service.dto.QuizAttemptSubmitDto;
 import com.lms.assessment_service.dto.QuizAnswerSubmitDto;
 import com.lms.assessment_service.dto.QuizCreateDto;
 import com.lms.assessment_service.dto.QuizQuestionCreateDto;
+import com.lms.assessment_service.exception.ResourceNotFoundException;
 import com.lms.assessment_service.model.Quiz;
 import com.lms.assessment_service.model.QuizAnswer;
 import com.lms.assessment_service.model.QuizAttempt;
@@ -53,7 +54,7 @@ public class QuizService {
     @Transactional
     public QuizAttempt submitQuizAttempt(Long quizId, QuizAttemptSubmitDto dto) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with ID: " + quizId));
         
         QuizAttempt attempt = new QuizAttempt();
         attempt.setQuiz(quiz);
