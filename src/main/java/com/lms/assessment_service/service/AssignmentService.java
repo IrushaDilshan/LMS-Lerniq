@@ -62,4 +62,46 @@ public class AssignmentService {
         
         return submissionRepository.save(submission);
     }
-}
+
+    // --- GET / Retrieval Methods ---
+    public java.util.List<Assignment> getAssignmentsByCourse(Long courseId) {
+        return assignmentRepository.findByCourseId(courseId);
+    }
+
+    public Assignment getAssignmentById(Long id) {
+        return assignmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found with id " + id));
+    }
+
+    public java.util.List<AssignmentSubmission> getSubmissionsForAssignment(Long assignmentId) {
+        return submissionRepository.findByAssignmentId(assignmentId);
+    }
+
+    public AssignmentSubmission getSubmissionById(Long id) {
+        return submissionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found with id " + id));
+    }
+
+    // --- UPDATE / DELETE ---
+    @Transactional
+    public Assignment updateAssignment(Long id, AssignmentCreateDto dto) {
+        Assignment assignment = getAssignmentById(id);
+        assignment.setTitle(dto.getTitle());
+        assignment.setDescription(dto.getDescription());
+        assignment.setDueDate(dto.getDueDate());
+        return assignmentRepository.save(assignment);
+    }
+
+    @Transactional
+    public void deleteAssignment(Long id) {
+        Assignment assignment = getAssignmentById(id);
+        // Clean up associated submission files first to save space!
+        java.util.List<AssignmentSubmission> submissions = getSubmissionsForAssignment(id);
+        for (AssignmentSubmission sub : submissions) {
+            if (sub.getFileUrl() != null) {
+                fileStorageService.deleteFile(sub.getFileUrl());
+            }
+        }
+        assignmentRepository.delete(assignment);
+    }
+} 
