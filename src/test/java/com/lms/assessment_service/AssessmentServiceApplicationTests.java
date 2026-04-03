@@ -1,4 +1,4 @@
-package com.example.assessment_service;
+package com.lms.assessment_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
