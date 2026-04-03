@@ -21,7 +21,7 @@ public class QuizController {
 
     // Instructor: Create a new Quiz
     @PostMapping
-    public ResponseEntity<Quiz> createQuiz(@RequestBody QuizCreateDto dto) {
+    public ResponseEntity<Quiz> createQuiz(@jakarta.validation.Valid @RequestBody QuizCreateDto dto) {
         Quiz created = quizService.createQuiz(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -53,7 +53,7 @@ public class QuizController {
     @PutMapping("/{quizId}")
     public ResponseEntity<Quiz> updateQuiz(
             @PathVariable Long quizId,
-            @RequestBody QuizCreateDto dto) {
+            @jakarta.validation.Valid @RequestBody QuizCreateDto dto) {
         return ResponseEntity.ok(quizService.updateQuiz(quizId, dto));
     }
 
