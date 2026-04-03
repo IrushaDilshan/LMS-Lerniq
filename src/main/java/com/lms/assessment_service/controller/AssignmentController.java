@@ -28,7 +28,7 @@ public class AssignmentController {
 
     // Instructor: Create a new Assignment
     @PostMapping
-    public ResponseEntity<Assignment> createAssignment(@RequestBody AssignmentCreateDto dto) {
+    public ResponseEntity<Assignment> createAssignment(@jakarta.validation.Valid @RequestBody AssignmentCreateDto dto) {
         Assignment created = assignmentService.createAssignment(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -87,7 +87,7 @@ public class AssignmentController {
     @PutMapping("/{assignmentId}")
     public ResponseEntity<Assignment> updateAssignment(
             @PathVariable Long assignmentId,
-            @RequestBody AssignmentCreateDto dto) {
+            @jakarta.validation.Valid @RequestBody AssignmentCreateDto dto) {
         return ResponseEntity.ok(assignmentService.updateAssignment(assignmentId, dto));
     }
 
