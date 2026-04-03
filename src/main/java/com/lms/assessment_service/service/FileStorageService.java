@@ -1,6 +1,8 @@
 package com.lms.assessment_service.service;
 
 import com.lms.assessment_service.exception.FileStorageException;
+import com.lms.assessment_service.exception.ResourceNotFoundException;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -51,6 +53,30 @@ public class FileStorageService {
             return targetLocation.toString(); // Or return a constructed URL string
         } catch (IOException ex) {
             throw new FileStorageException("Could not store file " + originalFileName + ". Please try again!", ex);
+        }
+    }
+
+    public Resource loadFileAsResource(String fileName) {
+        try {
+            // Because our fileUrl stores the full path in DB currently
+            Path filePath = Paths.get(fileName).normalize();
+            Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+            if(resource.exists()) {
+                return resource;
+            } else {
+                throw new ResourceNotFoundException("File not found " + fileName);
+            }
+        } catch (java.net.MalformedURLException ex) {
+            throw new ResourceNotFoundException("File not found " + fileName);
+        }
+    }
+
+    public boolean deleteFile(String fileName) {
+        try {
+            Path filePath = Paths.get(fileName).normalize();
+            return Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            return false;
         }
     }
 }
