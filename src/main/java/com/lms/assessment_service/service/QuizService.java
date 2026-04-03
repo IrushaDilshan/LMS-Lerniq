@@ -94,4 +94,29 @@ public class QuizService {
         
         return attemptRepository.save(attempt);
     }
-}
+
+    public List<Quiz> getQuizzesByCourse(Long courseId) {
+        return quizRepository.findByCourseId(courseId);
+    }
+
+    public Quiz getQuizById(Long id) {
+        return quizRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id " + id));
+    }
+
+    @Transactional
+    public Quiz updateQuiz(Long id, QuizCreateDto dto) {
+        Quiz quiz = getQuizById(id);
+        quiz.setTitle(dto.getTitle());
+        quiz.setDescription(dto.getDescription());
+        // For simplicity in a basic project, we might just re-create questions or leave them.
+        // We'll leave question updates out unless explicitly needed, returning the quiz.
+        return quizRepository.save(quiz);
+    }
+
+    @Transactional
+    public void deleteQuiz(Long id) {
+        Quiz quiz = getQuizById(id);
+        quizRepository.delete(quiz);
+    }
+} 
