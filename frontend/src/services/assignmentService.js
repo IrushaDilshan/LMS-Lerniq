@@ -26,6 +26,46 @@ const assignmentService = {
     });
     return response.data;
   },
+
+  // --- Instructor Endpoints ---
+
+  // Create a new assignment
+  createAssignment: async (assignmentData) => {
+    const response = await api.post('/assignments', assignmentData);
+    return response.data;
+  },
+
+  // Update an existing assignment
+  updateAssignment: async (assignmentId, assignmentData) => {
+    const response = await api.put(`/assignments/${assignmentId}`, assignmentData);
+    return response.data;
+  },
+
+  // Delete an assignment
+  deleteAssignment: async (assignmentId) => {
+    const response = await api.delete(`/assignments/${assignmentId}`);
+    return response.data;
+  },
+
+  // --- Grading Endpoints ---
+
+  // Get all submissions for an assignment
+  getSubmissionsForAssignment: async (assignmentId) => {
+    const response = await api.get(`/assignments/${assignmentId}/submissions`);
+    return response.data;
+  },
+
+  // Grade a submission
+  gradeSubmission: async (submissionId, gradeData) => {
+    const response = await api.post(`/assignments/submissions/${submissionId}/grade`, gradeData);
+    return response.data;
+  },
+
+  // Download URL constructor
+  getDownloadUrl: (submissionId) => {
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8084/api/v1';
+    return `${baseURL}/assignments/submissions/${submissionId}/download`;
+  }
 };
 
 export default assignmentService;
