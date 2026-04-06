@@ -42,7 +42,7 @@ const InstructorAssignmentGrading = () => {
 
   const openGradingModal = (submission) => {
     setSelectedSubmission(submission);
-    setGrade(submission.grade !== null ? submission.grade : '');
+    setGrade(submission.grade != null ? submission.grade : '');
     setFeedback(submission.feedback || '');
   };
 
@@ -149,7 +149,7 @@ const InstructorAssignmentGrading = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(sub.submittedAt).toLocaleString()}
+                    {new Date(sub.submissionDate).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <a
@@ -190,84 +190,82 @@ const InstructorAssignmentGrading = () => {
 
       {/* Grading Modal Overlay */}
       {selectedSubmission && (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" onClick={closeGradingModal}></div>
-            
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
-              <form onSubmit={handleGradeSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <Award className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-xl leading-6 font-bold text-gray-900" id="modal-title">
-                        Grade Submission
-                      </h3>
-                      <div className="mt-2 mb-6">
-                        <p className="text-sm text-gray-500">
-                          Student ID: <span className="font-semibold text-gray-700">{selectedSubmission.userId}</span>
-                        </p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <label htmlFor="grade" className="block text-sm font-semibold text-gray-700 mb-1">
-                            Score / Grade
-                          </label>
-                          <input
-                            type="number"
-                            name="grade"
-                            id="grade"
-                            min="0"
-                            step="0.01"
-                            required
-                            value={grade}
-                            onChange={(e) => setGrade(e.target.value)}
-                            className="w-full shadow-sm sm:text-sm border-gray-300 bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 rounded-lg p-2.5"
-                            placeholder="e.g. 95"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="feedback" className="flex items-center text-sm font-semibold text-gray-700 mb-1">
-                            <MessageSquare className="w-4 h-4 mr-1 text-gray-400" /> Feedback (Optional)
-                          </label>
-                          <textarea
-                            name="feedback"
-                            id="feedback"
-                            rows={3}
-                            value={feedback}
-                            onChange={(e) => setFeedback(e.target.value)}
-                            className="w-full shadow-sm sm:text-sm border-gray-300 bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 rounded-lg p-2.5"
-                            placeholder="Great job on the creative approach..."
-                          />
-                        </div>
-                      </div>
-                    </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75 backdrop-blur-sm overflow-y-auto">
+          <div 
+            className="absolute inset-0" 
+            onClick={closeGradingModal}
+          ></div>
+          
+          <div className="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-gray-100 transform transition-all mt-10 md:mt-0">
+            <form onSubmit={handleGradeSubmit}>
+              <div className="px-6 pt-6 pb-6 border-b border-gray-100">
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <Award className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Grade Submission
+                    </h3>
+                    <p className="text-sm text-gray-500 font-medium">
+                      Student ID: <span className="text-indigo-600 font-bold">S{selectedSubmission.userId}</span>
+                    </p>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100">
-                  <button
-                    type="submit"
-                    disabled={submittingGrade}
-                    className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2.5 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                  >
-                    {submittingGrade ? 'Saving...' : 'Save Grade'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeGradingModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
-                  >
-                    Cancel
-                  </button>
+
+                <div className="space-y-5">
+                  <div>
+                    <label htmlFor="grade" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Score / Grade
+                    </label>
+                    <input
+                      type="number"
+                      name="grade"
+                      id="grade"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={grade}
+                      onChange={(e) => setGrade(e.target.value)}
+                      className="w-full shadow-sm text-sm border-gray-300 bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 rounded-lg p-3 outline-none"
+                      placeholder="e.g. 95"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="feedback" className="flex items-center text-sm font-semibold text-gray-700 mb-1.5">
+                      Feedback (Optional)
+                    </label>
+                    <textarea
+                      name="feedback"
+                      id="feedback"
+                      rows={3}
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      className="w-full shadow-sm text-sm border-gray-300 bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 rounded-lg p-3 outline-none"
+                      placeholder="Provide constructive feedback here..."
+                    />
+                  </div>
                 </div>
-              </form>
-            </div>
+              </div>
+              
+              <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3">
+                <button
+                  type="button"
+                  onClick={closeGradingModal}
+                  className="mt-3 sm:mt-0 w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingGrade}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors flex items-center justify-center"
+                >
+                  {submittingGrade ? 'Saving Grade...' : 'Save Grade'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
