@@ -6,6 +6,9 @@ import InstructorQuizList from './components/quizzes/InstructorQuizList';
 import QuizForm from './components/quizzes/QuizForm';
 import AssignmentList from './components/assignments/AssignmentList';
 import AssignmentSubmit from './components/assignments/AssignmentSubmit';
+import InstructorAssignmentList from './components/assignments/InstructorAssignmentList';
+import AssignmentForm from './components/assignments/AssignmentForm';
+import InstructorAssignmentGrading from './components/assignments/InstructorAssignmentGrading';
 
 function App() {
   return (
@@ -27,7 +30,10 @@ function App() {
                     Manage Quizzes
                   </Link>
                   <Link to="/assignments" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                    Assignments
+                    Student Assignments
+                  </Link>
+                  <Link to="/instructor/assignments" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
+                    Manage Assignments
                   </Link>
                 </div>
               </div>
@@ -52,7 +58,10 @@ function App() {
                     Instructor Dashboard
                   </Link>
                   <Link to="/assignments" className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
-                    View Assignments
+                    Student Assignments
+                  </Link>
+                  <Link to="/instructor/assignments" className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
+                    Manage Assignments
                   </Link>
                 </div>
               </div>
@@ -70,6 +79,12 @@ function App() {
             {/* Assignments Routes */}
             <Route path="/assignments" element={<AssignmentList courseId={1} />} />
             <Route path="/assignments/:assignmentId/submit" element={<AssignmentSubmit studentId={1} />} />
+            
+            {/* Instructor Assignment Routes */}
+            <Route path="/instructor/assignments" element={<InstructorAssignmentList courseId={1} />} />
+            <Route path="/instructor/assignments/new" element={<AssignmentForm courseId={1} />} />
+            <Route path="/instructor/assignments/:assignmentId/edit" element={<AssignmentForm courseId={1} />} />
+            <Route path="/instructor/assignments/:assignmentId/grade" element={<InstructorAssignmentGrading />} />
           </Routes>
         </main>
       </div>
