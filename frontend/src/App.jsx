@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import QuizList from './components/quizzes/QuizList';
 import QuizTake from './components/quizzes/QuizTake';
+import AssignmentList from './components/assignments/AssignmentList';
+import AssignmentSubmit from './components/assignments/AssignmentSubmit';
 
 function App() {
   return (
@@ -19,6 +21,9 @@ function App() {
                   <Link to="/quizzes" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
                     Quizzes
                   </Link>
+                  <Link to="/assignments" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
+                    Assignments
+                  </Link>
                 </div>
               </div>
             </div>
@@ -34,14 +39,22 @@ function App() {
                 <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                   Access your course assessments, complete quizzes, and manage assignments from one central location.
                 </p>
-                <Link to="/quizzes" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
-                  View Quizzes
-                </Link>
+                <div className="flex justify-center space-x-4">
+                  <Link to="/quizzes" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
+                    View Quizzes
+                  </Link>
+                  <Link to="/assignments" className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
+                    View Assignments
+                  </Link>
+                </div>
               </div>
             } />
             
             <Route path="/quizzes" element={<QuizList courseId={1} />} />
             <Route path="/quizzes/:quizId/take" element={<QuizTake studentId={1} />} />
+            
+            <Route path="/assignments" element={<AssignmentList courseId={1} />} />
+            <Route path="/assignments/:assignmentId/submit" element={<AssignmentSubmit studentId={1} />} />
           </Routes>
         </main>
       </div>
