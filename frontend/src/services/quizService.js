@@ -18,6 +18,26 @@ const quizService = {
     const response = await api.post(`/quizzes/${quizId}/attempts`, attemptData);
     return response.data;
   },
+
+  // --- Instructor Endpoints ---
+
+  // Create a new quiz
+  createQuiz: async (quizData) => {
+    const response = await api.post(`/quizzes`, quizData);
+    return response.data;
+  },
+
+  // Update an existing quiz
+  updateQuiz: async (quizId, quizData) => {
+    const response = await api.put(`/quizzes/${quizId}`, quizData);
+    return response.data;
+  },
+
+  // Delete a quiz
+  deleteQuiz: async (quizId) => {
+    const response = await api.delete(`/quizzes/${quizId}`);
+    return response.data;
+  }
 };
 
 export default quizService;
