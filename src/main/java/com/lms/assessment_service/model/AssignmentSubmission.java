@@ -2,6 +2,7 @@ package com.lms.assessment_service.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "assignment_submissions")
@@ -13,6 +14,7 @@ public class AssignmentSubmission {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id", nullable = false)
+    @JsonIgnore
     private Assignment assignment;
 
     @Column(nullable = false)
