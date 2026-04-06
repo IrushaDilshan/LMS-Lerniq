@@ -66,11 +66,11 @@ const QuizTake = ({ studentId = 1 }) => { // Default studentId for now
       // The backend probably checks correctness, so we just send the content.
       const submittedAnswers = Object.entries(answers).map(([questionId, content]) => ({
         questionId: parseInt(questionId, 10),
-        answerContent: content
+        studentAnswer: content
       }));
       
       const payload = {
-        studentId: studentId,
+        userId: studentId,
         answers: submittedAnswers
       };
       
@@ -157,7 +157,7 @@ const QuizTake = ({ studentId = 1 }) => { // Default studentId for now
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
           <h2 className="text-xl font-medium text-gray-800 mb-6">
             <span className="text-indigo-600 mr-2">{currentQuestionIndex + 1}.</span>
-            {currentQuestion.text || currentQuestion.content}
+            {currentQuestion.questionText || currentQuestion.text || currentQuestion.content}
           </h2>
           
           <div className="space-y-4">
