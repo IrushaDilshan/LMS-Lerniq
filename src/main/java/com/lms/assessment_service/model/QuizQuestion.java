@@ -23,6 +23,9 @@ public class QuizQuestion {
     private Integer points;
     private String correctAnswer;
 
+    @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private java.util.List<QuizAnswer> answers;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -109,8 +109,23 @@ public class QuizService {
         Quiz quiz = getQuizById(id);
         quiz.setTitle(dto.getTitle());
         quiz.setDescription(dto.getDescription());
-        // For simplicity in a basic project, we might just re-create questions or leave them.
-        // We'll leave question updates out unless explicitly needed, returning the quiz.
+        if (quiz.getQuestions() != null) {
+            quiz.getQuestions().clear();
+        } else {
+            quiz.setQuestions(new ArrayList<>());
+        }
+        
+        if (dto.getQuestions() != null) {
+            for (QuizQuestionCreateDto qDto : dto.getQuestions()) {
+                QuizQuestion q = new QuizQuestion();
+                q.setQuestionText(qDto.getQuestionText());
+                q.setPoints(qDto.getPoints());
+                q.setCorrectAnswer(qDto.getCorrectAnswer());
+                q.setQuiz(quiz);
+                quiz.getQuestions().add(q);
+            }
+        }
+        
         return quizRepository.save(quiz);
     }
 
