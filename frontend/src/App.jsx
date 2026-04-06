@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import QuizList from './components/quizzes/QuizList';
 import QuizTake from './components/quizzes/QuizTake';
+import InstructorQuizList from './components/quizzes/InstructorQuizList';
+import QuizForm from './components/quizzes/QuizForm';
 import AssignmentList from './components/assignments/AssignmentList';
 import AssignmentSubmit from './components/assignments/AssignmentSubmit';
 
@@ -19,7 +21,10 @@ function App() {
                 </Link>
                 <div className="ml-10 flex items-baseline space-x-4">
                   <Link to="/quizzes" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
-                    Quizzes
+                    Student Quizzes
+                  </Link>
+                  <Link to="/instructor/quizzes" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
+                    Manage Quizzes
                   </Link>
                   <Link to="/assignments" className="hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">
                     Assignments
@@ -43,6 +48,9 @@ function App() {
                   <Link to="/quizzes" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
                     View Quizzes
                   </Link>
+                  <Link to="/instructor/quizzes" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
+                    Instructor Dashboard
+                  </Link>
                   <Link to="/assignments" className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">
                     View Assignments
                   </Link>
@@ -50,9 +58,16 @@ function App() {
               </div>
             } />
             
+            {/* Student Routes */}
             <Route path="/quizzes" element={<QuizList courseId={1} />} />
             <Route path="/quizzes/:quizId/take" element={<QuizTake studentId={1} />} />
             
+            {/* Instructor Routes */}
+            <Route path="/instructor/quizzes" element={<InstructorQuizList courseId={1} />} />
+            <Route path="/instructor/quizzes/new" element={<QuizForm courseId={1} />} />
+            <Route path="/instructor/quizzes/:quizId/edit" element={<QuizForm courseId={1} />} />
+            
+            {/* Assignments Routes */}
             <Route path="/assignments" element={<AssignmentList courseId={1} />} />
             <Route path="/assignments/:assignmentId/submit" element={<AssignmentSubmit studentId={1} />} />
           </Routes>
