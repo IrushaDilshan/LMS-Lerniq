@@ -11,6 +11,7 @@ public class TicketResponse {
     private String resourceLocation;
     private String category;
     private String description;
+    private String resolutionNote;
     private TicketPriority priority;
     private String preferredContactDetails;
     private TicketStatus status;
@@ -50,6 +51,14 @@ public class TicketResponse {
     
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getResolutionNote() {
+        return this.resolutionNote;
+    }
+    
+    public void setResolutionNote(String resolutionNote) {
+        this.resolutionNote = resolutionNote;
     }
 
     public TicketPriority getPriority() {
