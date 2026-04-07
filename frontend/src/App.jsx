@@ -1,35 +1,21 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Home, BookOpen, FileText, Settings, Bell, MessageSquare, Menu, Book } from 'lucide-react';
-import QuizList from './components/quizzes/QuizList';
-import QuizTake from './components/quizzes/QuizTake';
-import InstructorQuizList from './components/quizzes/InstructorQuizList';
-import QuizForm from './components/quizzes/QuizForm';
-import AssignmentList from './components/assignments/AssignmentList';
-import AssignmentSubmit from './components/assignments/AssignmentSubmit';
-import InstructorAssignmentList from './components/assignments/InstructorAssignmentList';
-import AssignmentForm from './components/assignments/AssignmentForm';
-import InstructorAssignmentGrading from './components/assignments/InstructorAssignmentGrading';
+import { Home, BookOpen, Calendar, Wrench, Settings, Bell, MessageSquare, Menu } from 'lucide-react';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
+import TicketDashboard from './components/pages/TicketDashboard';
+import TicketDetailView from './components/tickets/TicketDetailView';
 
 function AppContent() {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
 
   const navLinks = [
-    { name: 'Home', path: '/', icon: <Home className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'My Courses', path: '/my-courses', icon: <Book className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'Assignments', path: '/assignments', icon: <FileText className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'Time Table', path: '/timetable', icon: <BookOpen className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'Forum', path: '/forum', icon: <MessageSquare className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
+    { name: 'Dashboard', path: '/', icon: <Home className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
+    { name: 'Resources', path: '/resources', icon: <BookOpen className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
+    { name: 'Bookings', path: '/bookings', icon: <Calendar className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
+    { name: 'Maintenance Tickets', path: '/tickets', icon: <Wrench className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-  ];
-
-  const devLinks = [
-    { name: 'Student Quizzes', path: '/quizzes', icon: <BookOpen className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'Manage Quizzes', path: '/instructor/quizzes', icon: <Book className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
-    { name: 'Manage Assignments', path: '/instructor/assignments', icon: <FileText className="w-5 h-5 md:mr-3 mx-auto md:mx-0 flex-shrink-0" /> },
   ];
 
   return (
@@ -77,25 +63,6 @@ function AppContent() {
             </Link>
           ))}
 
-          <div className="mt-8 mb-2 px-6">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest hidden md:block">Development</p>
-            <div className="h-px bg-gray-700 mt-2 block md:hidden"></div>
-          </div>
-
-          {devLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`flex items-center justify-center md:justify-start px-2 md:px-4 py-3.5 mt-2 rounded-xl transition-colors font-medium text-sm w-full max-w-[200px] mx-auto ${
-                isActive(link.path)
-                  ? 'bg-orange-500 text-white'
-                  : 'text-orange-300 hover:bg-[#11233e] hover:text-orange-400'
-              }`}
-            >
-              {link.icon}
-              <span className="hidden md:inline">{link.name}</span>
-            </Link>
-          ))}
         </nav>
       </aside>
 
@@ -117,26 +84,11 @@ function AppContent() {
         <div className="flex-1 overflow-y-auto p-8 pt-10">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/resources" element={<div className="text-gray-800 text-xl text-center mt-12 font-semibold">Resources Module Coming Soon...</div>} />
+            <Route path="/bookings" element={<div className="text-gray-800 text-xl text-center mt-12 font-semibold">Bookings Module Coming Soon...</div>} />
+            <Route path="/tickets" element={<TicketDashboard />} />
+            <Route path="/tickets/:id" element={<TicketDetailView />} />
             <Route path="/settings" element={<SettingsPage />} />
-            
-            {/* Student Routes */}
-            <Route path="/quizzes" element={<QuizList courseId={1} />} />
-            <Route path="/quizzes/:quizId/take" element={<QuizTake studentId={1} />} />
-            
-            {/* Instructor Routes */}
-            <Route path="/instructor/quizzes" element={<InstructorQuizList courseId={1} />} />
-            <Route path="/instructor/quizzes/new" element={<QuizForm courseId={1} />} />
-            <Route path="/instructor/quizzes/:quizId/edit" element={<QuizForm courseId={1} />} />
-            
-            {/* Assignments Routes */}
-            <Route path="/assignments" element={<AssignmentList courseId={1} />} />
-            <Route path="/assignments/:assignmentId/submit" element={<AssignmentSubmit studentId={1} />} />
-            
-            {/* Instructor Assignment Routes */}
-            <Route path="/instructor/assignments" element={<InstructorAssignmentList courseId={1} />} />
-            <Route path="/instructor/assignments/new" element={<AssignmentForm courseId={1} />} />
-            <Route path="/instructor/assignments/:assignmentId/edit" element={<AssignmentForm courseId={1} />} />
-            <Route path="/instructor/assignments/:assignmentId/grade" element={<InstructorAssignmentGrading />} />
           </Routes>
         </div>
       </main>
