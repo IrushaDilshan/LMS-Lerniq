@@ -2,6 +2,9 @@ package com.smartcampus.ticketing_service.controller;
 
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
+import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
+import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
+import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.service.IncidentTicketService;
 import jakarta.validation.Valid;
@@ -15,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tickets")
+@RequestMapping("/api/v1/tickets")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class IncidentTicketController {
 
@@ -50,7 +53,26 @@ public class IncidentTicketController {
     @PutMapping("/{id}/status")
     public ResponseEntity<TicketResponse> updateTicketStatus(
             @PathVariable Long id,
-            @RequestParam TicketStatus status) {
-        return ResponseEntity.ok(ticketService.updateTicketStatus(id, status));
+            @RequestBody TicketStatusUpdateRequest request) {
+        TicketResponse updated = ticketService.updateTicketStatus(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<CommentResponse>> getTicketComments(@PathVariable Long id) {
+        List<CommentResponse> comments = ticketService.getComments(id);
+        return ResponseEntity.ok(comments);
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<?> addComment(
+            @PathVariable Long id,
+            @Valid @RequestBody CommentCreateRequest request) {
+        try {
+            CommentResponse comment = ticketService.addComment(id, request);
+            return new ResponseEntity<>(comment, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 }
