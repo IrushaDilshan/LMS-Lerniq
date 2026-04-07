@@ -48,11 +48,22 @@ public class IncidentTicket {
 
     private Long assignedTechnicianId;
 
+    @Column(columnDefinition = "TEXT")
+    private String resolutionNote;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public String getResolutionNote() {
+        return this.resolutionNote;
+    }
+    
+    public void setResolutionNote(String resolutionNote) {
+        this.resolutionNote = resolutionNote;
+    }
 
     public Long getId() {
         return this.id;
