@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Tag, Calendar, AlertCircle, Clock, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, MapPin, Tag, Calendar, AlertCircle, Clock, CheckCircle, Image as ImageIcon, UserCheck } from 'lucide-react';
 import api from '../../api/axios';
 import TicketStatusUpdater from './TicketStatusUpdater';
 import CommentSection from './CommentSection';
+import TechnicianAssigner from './TechnicianAssigner';
 
 const TicketDetailView = () => {
   const { id } = useParams();
@@ -89,7 +90,7 @@ const TicketDetailView = () => {
         {/* Main Ticket Info Column */}
         <div className="xl:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 grid md:grid-cols-3 gap-4 bg-gray-50/50">
+            <div className="p-6 border-b border-gray-100 grid md:grid-cols-4 gap-4 bg-gray-50/50">
               <div className="flex items-start space-x-2">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
@@ -113,6 +114,15 @@ const TicketDetailView = () => {
                   </p>
                 </div>
               </div>
+              {ticket.assignedTechnicianId && (
+                <div className="flex items-start space-x-2">
+                  <UserCheck className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-blue-500 uppercase">Assigned Tech</p>
+                    <p className="font-semibold text-gray-800">ID #{ticket.assignedTechnicianId}</p>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="p-6">
@@ -181,6 +191,12 @@ const TicketDetailView = () => {
             currentNote={ticket.resolutionNote}
             currentRejectionReason={ticket.rejectionReason}
             onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})} 
+          />
+
+          <TechnicianAssigner
+            ticketId={ticket.id}
+            currentTechnicianId={ticket.assignedTechnicianId}
+            onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})}
           />
           
           <div className="bg-[#061224] text-white rounded-xl p-6 shadow-sm border border-gray-800">
