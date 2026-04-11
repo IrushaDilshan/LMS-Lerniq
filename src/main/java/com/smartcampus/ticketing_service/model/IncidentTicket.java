@@ -51,11 +51,22 @@ public class IncidentTicket {
     @Column(columnDefinition = "TEXT")
     private String resolutionNote;
 
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public String getRejectionReason() {
+        return this.rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
 
     public String getResolutionNote() {
         return this.resolutionNote;
