@@ -89,4 +89,13 @@ public class IncidentTicketController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long ticketId,
+            @PathVariable Long commentId,
+            @RequestParam Long requestingUserId) {
+        ticketService.deleteComment(ticketId, commentId, requestingUserId);
+        return ResponseEntity.noContent().build(); // 204
+    }
 }
