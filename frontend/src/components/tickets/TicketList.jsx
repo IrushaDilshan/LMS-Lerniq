@@ -111,6 +111,28 @@ const TicketList = () => {
     );
   }
 
+  const calculateTimer = (createdAt, updatedAt, status) => {
+    const start = new Date(createdAt);
+    let end = new Date();
+    if (status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
+      end = new Date(updatedAt || createdAt);
+    }
+    
+    const diffMs = end - start;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
+      if (diffDays > 0) return `Ended in ${diffDays}d`;
+      if (diffHours > 0) return `Ended in ${diffHours}h`;
+      return 'Ended in <1h';
+    } else {
+      if (diffDays > 0) return `Open for ${diffDays}d`;
+      if (diffHours > 0) return `Open for ${diffHours}h`;
+      return 'Just opened';
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Header */}
@@ -188,8 +210,13 @@ const TicketList = () => {
                     <td className="py-4 px-4 text-sm text-gray-600 whitespace-nowrap">{ticket.category}</td>
                     <td className="py-4 px-4"><PriorityBadge priority={ticket.priority} /></td>
                     <td className="py-4 px-4"><StatusBadge status={ticket.status} /></td>
-                    <td className="py-4 pl-4 text-right text-xs text-gray-400 whitespace-nowrap">
-                      {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <td className="py-4 pl-4 text-right whitespace-nowrap">
+                      <div className="text-xs text-gray-800 font-medium">
+                        {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-0.5">
+                        {calculateTimer(ticket.createdAt, ticket.updatedAt, ticket.status)}
+                      </div>
                     </td>
                     <td className="py-4 pl-2 pr-1">
                       <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
