@@ -32,10 +32,12 @@ const TicketDashboard = () => {
       const res = await api.get('/tickets');
       const tickets = res.data;
       setStats({
-        total: tickets.length,
-        open: tickets.filter(t => t.status === 'OPEN').length,
+        total:      tickets.length,
+        open:       tickets.filter(t => t.status === 'OPEN').length,
         inProgress: tickets.filter(t => t.status === 'IN_PROGRESS').length,
-        resolved: tickets.filter(t => t.status === 'RESOLVED').length,
+        resolved:   tickets.filter(t => t.status === 'RESOLVED').length,
+        closed:     tickets.filter(t => t.status === 'CLOSED').length,
+        rejected:   tickets.filter(t => t.status === 'REJECTED').length,
       });
     } catch (e) {
       // non-critical
