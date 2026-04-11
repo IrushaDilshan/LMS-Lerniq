@@ -42,6 +42,10 @@ const TicketDetailView = () => {
         return <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><Clock className="w-4 h-4"/> In Progress</span>;
       case 'RESOLVED':
         return <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4"/> Resolved</span>;
+      case 'CLOSED':
+        return <span className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4"/> Closed</span>;
+      case 'REJECTED':
+        return <span className="px-3 py-1.5 bg-rose-100 text-rose-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><AlertCircle className="w-4 h-4"/> Rejected</span>;
       default:
         return <span className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-sm font-bold">{status}</span>;
     }
@@ -124,6 +128,15 @@ const TicketDetailView = () => {
                 <p className="text-emerald-700 font-medium">{ticket.resolutionNote}</p>
               </div>
             )}
+
+            {ticket.status === 'REJECTED' && ticket.rejectionReason && (
+              <div className="p-6 bg-rose-50 border-t border-rose-100">
+                <h3 className="text-sm font-bold text-rose-800 uppercase tracking-wide mb-2 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1.5" /> Rejection Reason
+                </h3>
+                <p className="text-rose-700 font-medium">{ticket.rejectionReason}</p>
+              </div>
+            )}
           </div>
 
           {/* Attachments Section */}
@@ -135,21 +148,21 @@ const TicketDetailView = () => {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {ticket.attachmentUrls.map((url, index) => {
-                  // The API might return absolute server path or relative, 
-                  // In a real app we'd map this to static GET, mocking UI for now
+                  // Extract just the filename in case the DB has old absolute paths
+                  const filename = url.split(/[\\/]/).pop();
+                  const imageUrl = `${IMAGE_BASE_URL}/uploads/${filename}`;
                   return (
-                    <div key={index} className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex flex-col group relative">
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    <a href={imageUrl} target="_blank" rel="noopener noreferrer" key={index} className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex flex-col group relative cursor-pointer outline-none">
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center z-10 pointer-events-none">
                         <span className="text-white text-sm font-medium">View Full</span>
                       </div>
-                      <div className="flex-1 flex items-center justify-center">
-                        <ImageIcon className="w-10 h-10 text-gray-300" />
-                        {/* <img src={`${IMAGE_BASE_URL}/${url}`} alt="attachment" className="w-full h-full object-cover" /> */}
+                      <div className="flex-1 flex items-center justify-center relative overflow-hidden bg-white">
+                        <img src={imageUrl} alt={`Attachment ${index + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onError={(e) => { e.target.onerror = null; e.target.parentElement.innerHTML = '<div class="text-gray-400 text-xs text-center p-2">Image Not Found</div>'; }} />
                       </div>
-                      <div className="bg-white px-3 py-2 text-xs truncate border-t border-gray-200 text-gray-500">
-                        Attachment {index + 1}
+                      <div className="bg-white px-3 py-2 text-xs truncate border-t border-gray-200 text-gray-500 relative z-10">
+                        {filename}
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -166,7 +179,8 @@ const TicketDetailView = () => {
             ticketId={ticket.id} 
             currentStatus={ticket.status} 
             currentNote={ticket.resolutionNote}
-            onUpdateSuccess={handleStatusUpdate}
+            currentRejectionReason={ticket.rejectionReason}
+            onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})} 
           />
           
           <div className="bg-[#061224] text-white rounded-xl p-6 shadow-sm border border-gray-800">
