@@ -4,6 +4,7 @@ import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
+import com.smartcampus.ticketing_service.exception.UnauthorizedException;
 import com.smartcampus.ticketing_service.model.IncidentTicket;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.model.TicketComment;
@@ -137,6 +138,29 @@ public class IncidentTicketService {
         
         comment = ticketCommentRepository.save(comment);
         return mapToCommentResponse(comment);
+    }
+
+    public void deleteComment(Long ticketId, Long commentId, Long requestingUserId) {
+        // Verify the ticket exists
+        if (!ticketRepository.existsById(ticketId)) {
+            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
+        }
+
+        // Verify the comment exists
+        TicketComment comment = ticketCommentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+
+        // Verify the comment belongs to this ticket
+        if (!comment.getTicket().getId().equals(ticketId)) {
+            throw new ResourceNotFoundException("Comment " + commentId + " does not belong to ticket " + ticketId);
+        }
+
+        // Ownership check — only the author can delete their own comment
+        if (!comment.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You can only delete your own comments.");
+        }
+
+        ticketCommentRepository.delete(comment);
     }
 
     private CommentResponse mapToCommentResponse(TicketComment comment) {
