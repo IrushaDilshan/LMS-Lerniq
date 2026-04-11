@@ -3,13 +3,22 @@ import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, Chev
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 
-const STATUS_TABS = ['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED'];
+const STATUS_TABS = [
+  { key: 'ALL',         label: 'All' },
+  { key: 'OPEN',        label: 'Open' },
+  { key: 'IN_PROGRESS', label: 'In Progress' },
+  { key: 'RESOLVED',    label: 'Resolved' },
+  { key: 'CLOSED',      label: 'Closed' },
+  { key: 'REJECTED',    label: 'Rejected' },
+];
 
 const StatusBadge = ({ status }) => {
   const map = {
-    OPEN:        { label: 'Open',        cls: 'bg-yellow-100 text-yellow-800 border-yellow-200',  icon: AlertCircle },
-    IN_PROGRESS: { label: 'In Progress', cls: 'bg-blue-100 text-blue-800 border-blue-200',        icon: Clock },
+    OPEN:        { label: 'Open',        cls: 'bg-yellow-100 text-yellow-800 border-yellow-200',    icon: AlertCircle },
+    IN_PROGRESS: { label: 'In Progress', cls: 'bg-blue-100 text-blue-800 border-blue-200',          icon: Clock },
     RESOLVED:    { label: 'Resolved',    cls: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: CheckCircle },
+    CLOSED:      { label: 'Closed',      cls: 'bg-gray-100 text-gray-600 border-gray-200',          icon: CheckCircle },
+    REJECTED:    { label: 'Rejected',    cls: 'bg-rose-100 text-rose-700 border-rose-200',          icon: AlertCircle },
   };
   const cfg = map[status] || { label: status, cls: 'bg-gray-100 text-gray-700 border-gray-200', icon: AlertCircle };
   const Icon = cfg.icon;
@@ -37,20 +46,33 @@ const PriorityBadge = ({ priority }) => {
 };
 
 const TicketList = () => {
-  const [tickets, setTickets] = useState([]);
+  const [tickets, setTickets] = useState([]);       // currently displayed (filtered)
+  const [allTickets, setAllTickets] = useState([]); // full list for tab counts
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => { fetchTickets(); }, []);
+  // Fetch full list once for tab counts, then fetch filtered list
+  useEffect(() => {
+    fetchAllForCounts();
+    fetchTickets(false, 'ALL');
+  }, []);
 
-  const fetchTickets = async (silent = false) => {
+  const fetchAllForCounts = async () => {
+    try {
+      const res = await api.get('/tickets');
+      setAllTickets(res.data);
+    } catch (_) { /* non-critical */ }
+  };
+
+  const fetchTickets = async (silent = false, filter = activeFilter) => {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const res = await api.get('/tickets');
+      const params = filter !== 'ALL' ? { status: filter } : {};
+      const res = await api.get('/tickets', { params });
       setTickets(res.data);
       setError('');
     } catch (err) {
@@ -61,7 +83,12 @@ const TicketList = () => {
     }
   };
 
-  const filtered = activeFilter === 'ALL' ? tickets : tickets.filter(t => t.status === activeFilter);
+  const handleFilterChange = (filterKey) => {
+    setActiveFilter(filterKey);
+    fetchTickets(false, filterKey);
+  };
+
+  const filtered = tickets; // already filtered by backend
 
   if (isLoading) {
     return (
@@ -104,17 +131,17 @@ const TicketList = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="px-6 pt-4 pb-0 flex items-center gap-1 border-b border-gray-100">
+      <div className="px-6 pt-4 pb-0 flex items-center gap-1 flex-wrap border-b border-gray-100">
         {STATUS_TABS.map(tab => (
-          <button key={tab} onClick={() => setActiveFilter(tab)}
+          <button key={tab.key} onClick={() => handleFilterChange(tab.key)}
             className={`px-4 py-2 text-xs font-bold rounded-t-lg transition-all border-b-2 -mb-px
-              ${activeFilter === tab
+              ${activeFilter === tab.key
                 ? 'border-[#061224] text-[#061224] bg-gray-50'
                 : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
-            {tab === 'IN_PROGRESS' ? 'In Progress' : tab.charAt(0) + tab.slice(1).toLowerCase()}
-            {tab !== 'ALL' && (
+            {tab.label}
+            {tab.key !== 'ALL' && (
               <span className="ml-1.5 bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5 text-[10px]">
-                {tickets.filter(t => t.status === tab).length}
+                {allTickets.filter(t => t.status === tab.key).length}
               </span>
             )}
           </button>
