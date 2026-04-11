@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Settings, Save } from 'lucide-react';
 import api from '../../api/axios';
 
-const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuccess }) => {
+const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, currentRejectionReason, onUpdateSuccess }) => {
   const [status, setStatus] = useState(currentStatus);
   const [resolutionNote, setResolutionNote] = useState(currentNote || '');
+  const [rejectionReason, setRejectionReason] = useState(currentRejectionReason || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,7 +17,8 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuc
     try {
       const response = await api.put(`/tickets/${ticketId}/status`, {
         status: status,
-        resolutionNote: resolutionNote
+        resolutionNote: status === 'RESOLVED' ? resolutionNote : null,
+        rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       });
       if (response.status === 200) {
         onUpdateSuccess(response.data);
@@ -48,20 +50,38 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuc
             <option value="OPEN">Open</option>
             <option value="IN_PROGRESS">In Progress</option>
             <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+            <option value="REJECTED">Rejected</option>
           </select>
         </div>
         
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Resolution Note <span className="text-gray-400 font-normal">(Required if Resolved)</span></label>
-          <textarea
-            value={resolutionNote}
-            onChange={(e) => setResolutionNote(e.target.value)}
-            rows="3"
-            required={status === 'RESOLVED'}
-            placeholder="Document actions taken..."
-            className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-          ></textarea>
-        </div>
+        {status === 'RESOLVED' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Resolution Note <span className="text-gray-400 font-normal">(Required)</span></label>
+            <textarea
+              value={resolutionNote}
+              onChange={(e) => setResolutionNote(e.target.value)}
+              rows="3"
+              required={status === 'RESOLVED'}
+              placeholder="Document actions taken..."
+              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+            ></textarea>
+          </div>
+        )}
+
+        {status === 'REJECTED' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Rejection Reason <span className="text-gray-400 font-normal">(Required)</span></label>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows="3"
+              required={status === 'REJECTED'}
+              placeholder="Provide reason for rejection..."
+              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+            ></textarea>
+          </div>
+        )}
         
         <div className="flex justify-end">
           <button
