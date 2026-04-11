@@ -1,5 +1,6 @@
 package com.smartcampus.ticketing_service.service;
 
+import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
@@ -65,8 +66,24 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<TicketResponse> getAllTickets() {
-        return ticketRepository.findAll().stream().map(this::mapToResponse).toList();
+    public List<TicketResponse> getAllTickets(TicketStatus status, Long userId) {
+        List<IncidentTicket> tickets;
+
+        if (status != null && userId != null) {
+            // Both filters applied
+            tickets = ticketRepository.findByStatusAndCreatedByUserId(status, userId);
+        } else if (status != null) {
+            // Filter by status only
+            tickets = ticketRepository.findByStatus(status);
+        } else if (userId != null) {
+            // Filter by user only
+            tickets = ticketRepository.findByCreatedByUserId(userId);
+        } else {
+            // No filter — return all
+            tickets = ticketRepository.findAll();
+        }
+
+        return tickets.stream().map(this::mapToResponse).toList();
     }
 
     public TicketResponse getTicketById(Long id) {
@@ -82,6 +99,21 @@ public class IncidentTicketService {
         if (updateRequest.getResolutionNote() != null) {
             ticket.setResolutionNote(updateRequest.getResolutionNote());
         }
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+
+        ticket.setAssignedTechnicianId(request.getTechnicianId());
+
+        // Auto-advance status: OPEN → IN_PROGRESS when a technician is assigned
+        if (ticket.getStatus() == TicketStatus.OPEN) {
+            ticket.setStatus(TicketStatus.IN_PROGRESS);
+        }
+
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
     }
