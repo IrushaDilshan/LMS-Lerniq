@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Home, BookOpen, Calendar, Wrench, Settings, Bell, MessageSquare, Menu } from 'lucide-react';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
+import ResourcesPage from './components/pages/ResourcesPage';
 import TicketDashboard from './components/pages/TicketDashboard';
 import TicketDetailView from './components/tickets/TicketDetailView';
 
@@ -84,7 +85,7 @@ function AppContent() {
         <div className="flex-1 overflow-y-auto p-8 pt-10">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/resources" element={<div className="text-gray-800 text-xl text-center mt-12 font-semibold">Resources Module Coming Soon...</div>} />
+            <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/bookings" element={<div className="text-gray-800 text-xl text-center mt-12 font-semibold">Bookings Module Coming Soon...</div>} />
             <Route path="/tickets" element={<TicketDashboard />} />
             <Route path="/tickets/:id" element={<TicketDetailView />} />
