@@ -100,6 +100,9 @@ public class IncidentTicketService {
         if (updateRequest.getResolutionNote() != null) {
             ticket.setResolutionNote(updateRequest.getResolutionNote());
         }
+        if (updateRequest.getRejectionReason() != null) {
+            ticket.setRejectionReason(updateRequest.getRejectionReason());
+        }
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
     }
@@ -181,6 +184,7 @@ public class IncidentTicketService {
         response.setCategory(ticket.getCategory());
         response.setDescription(ticket.getDescription());
         response.setResolutionNote(ticket.getResolutionNote());
+        response.setRejectionReason(ticket.getRejectionReason());
         response.setPriority(ticket.getPriority());
         response.setPreferredContactDetails(ticket.getPreferredContactDetails());
         response.setStatus(ticket.getStatus());
