@@ -3,20 +3,22 @@ import { Wrench, Plus, List, AlertTriangle, Clock, CheckCircle, TrendingUp, X } 
 import TicketSubmissionForm from '../tickets/TicketSubmissionForm';
 import TicketList from '../tickets/TicketList';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const StatCard = ({ icon: Icon, label, value, color, bg }) => (
-  <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl border ${bg} transition-transform hover:-translate-y-0.5`}>
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
-      <Icon className="w-5 h-5" />
+  <div className={`flex items-center gap-5 px-8 py-7 rounded-[2.5rem] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] group cursor-pointer`}>
+    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} transition-transform group-hover:scale-110`}>
+      <Icon className="w-7 h-7" />
     </div>
     <div>
-      <p className="text-2xl font-extrabold text-[#061224] leading-none">{value}</p>
-      <p className="text-xs text-gray-500 mt-0.5 font-medium">{label}</p>
+      <p className="text-3xl font-black text-[#061224] leading-none tracking-tight">{value}</p>
+      <p className="text-[10px] text-gray-400 mt-1.5 font-black uppercase tracking-widest">{label}</p>
     </div>
   </div>
 );
 
 const TicketDashboard = () => {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'new'
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0, total: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
@@ -52,63 +54,69 @@ const TicketDashboard = () => {
   };
 
   return (
-    <div className="space-y-7 max-w-6xl mx-auto">
+    <div className="space-y-10 max-w-6xl mx-auto animate-fade-in pb-20">
 
       {/* ── Page Header ── */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-[#061224] flex items-center justify-center shadow">
-              <Wrench className="w-5 h-5 text-blue-300" />
-            </div>
-            <h1 className="text-3xl font-extrabold text-[#061224] tracking-tight">Maintenance Tickets</h1>
+      <div className="flex items-center justify-between flex-wrap gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 rounded-[1.5rem] bg-[#061224] flex items-center justify-center shadow-2xl shadow-blue-900/40">
+            <Wrench className="w-8 h-8 text-blue-300" />
           </div>
-          <p className="text-gray-500 ml-[52px] text-sm">Manage facility and equipment repairs across the campus.</p>
+          <div>
+            <h1 className="text-4xl font-black text-[#061224] tracking-tight">Support Hub</h1>
+            <p className="text-gray-500 font-medium text-sm mt-0.5 tracking-tight">System operations and facility management portal.</p>
+          </div>
         </div>
 
-        {/* New Ticket CTA */}
-        <button
-          onClick={() => setActiveTab(activeTab === 'new' ? 'list' : 'new')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm
-            ${activeTab === 'new'
-              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              : 'bg-[#061224] text-white hover:bg-[#1a365d] shadow-blue-900/20'
-            }`}
-        >
-          {activeTab === 'new' ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> New Ticket</>}
-        </button>
+        {/* New Ticket CTA - Only for USER role */}
+        {currentUser.role === 'USER' && (
+          <button
+            onClick={() => setActiveTab(activeTab === 'new' ? 'list' : 'new')}
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all shadow-xl
+              ${activeTab === 'new'
+                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-gray-200/20'
+                : 'bg-[#061224] text-white hover:bg-[#1a365d] shadow-blue-900/30 active:scale-95'
+              }`}
+          >
+            {activeTab === 'new' ? <><X className="w-5 h-5" /> Cancel Request</> : <><Plus className="w-5 h-5" /> New Ticket</>}
+          </button>
+        )}
       </div>
 
       {/* ── Stats Row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard icon={TrendingUp}   label="Total Tickets"  value={statsLoading ? '—' : stats.total}      color="bg-blue-100 text-blue-600"    bg="bg-white border-gray-100 shadow-sm" />
-        <StatCard icon={AlertTriangle} label="Open"          value={statsLoading ? '—' : stats.open}       color="bg-yellow-100 text-yellow-600" bg="bg-white border-gray-100 shadow-sm" />
-        <StatCard icon={Clock}         label="In Progress"   value={statsLoading ? '—' : stats.inProgress} color="bg-indigo-100 text-indigo-600"  bg="bg-white border-gray-100 shadow-sm" />
-        <StatCard icon={CheckCircle}   label="Resolved"      value={statsLoading ? '—' : stats.resolved}   color="bg-emerald-100 text-emerald-600" bg="bg-white border-gray-100 shadow-sm" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard icon={TrendingUp}   label="Total Tickets"  value={statsLoading ? '—' : stats.total}      color="bg-blue-50 text-blue-600" />
+        <StatCard icon={AlertTriangle} label="Open Status"    value={statsLoading ? '—' : stats.open}       color="bg-amber-50 text-amber-600" />
+        <StatCard icon={Clock}         label="In Progress"   value={statsLoading ? '—' : stats.inProgress} color="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={CheckCircle}   label="Resolved"      value={statsLoading ? '—' : stats.resolved}   color="bg-emerald-50 text-emerald-600" />
       </div>
 
       {/* ── Tab Switcher ── */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex items-center gap-2 bg-gray-100/50 p-1.5 rounded-2xl w-fit border border-gray-100 backdrop-blur-sm">
         <button
           onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
-            ${activeTab === 'list' ? 'bg-white text-[#061224] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+            ${activeTab === 'list' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
         >
-          <List className="w-4 h-4" /> All Tickets
+          <List className="w-4 h-4" /> Management Queue
         </button>
-        <button
-          onClick={() => setActiveTab('new')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
-            ${activeTab === 'new' ? 'bg-white text-[#061224] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <Plus className="w-4 h-4" /> Report an Incident
-        </button>
+        {currentUser.role === 'USER' && (
+          <button
+            onClick={() => setActiveTab('new')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+              ${activeTab === 'new' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <Plus className="w-4 h-4" /> Report Incident
+          </button>
+        )}
       </div>
 
       {/* ── Tab Content ── */}
       <div className="animate-fade-in">
         {activeTab === 'list' ? (
-          <TicketList key={ticketListKey} />
+          <div className="rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-blue-900/5 bg-white">
+             <TicketList key={ticketListKey} />
+          </div>
         ) : (
           <TicketSubmissionFormWrapper onSuccess={handleTicketSubmitted} />
         )}
