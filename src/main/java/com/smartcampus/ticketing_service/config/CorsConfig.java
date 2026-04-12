@@ -24,7 +24,11 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String absolutePath = java.nio.file.Paths.get("uploads/tickets").toAbsolutePath().toUri().toString();
+        if (!absolutePath.endsWith("/")) {
+            absolutePath += "/";
+        }
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/tickets/");
+                .addResourceLocations(absolutePath);
     }
 }

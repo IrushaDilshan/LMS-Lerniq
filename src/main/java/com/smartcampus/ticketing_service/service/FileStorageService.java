@@ -58,8 +58,8 @@ public class FileStorageService {
 
     public Resource loadFileAsResource(String fileName) {
         try {
-            // Because our fileUrl stores the full path in DB currently
-            Path filePath = Paths.get(fileName).normalize();
+            // Resolve the filename securely against our target upload directory
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
             if(resource.exists()) {
                 return resource;
