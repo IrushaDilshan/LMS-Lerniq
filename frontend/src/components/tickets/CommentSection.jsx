@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, User, Trash2 } from 'lucide-react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const CommentSection = ({ ticketId }) => {
+  const { currentUser } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isPosting, setIsPosting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null); // ID of comment being deleted
 
-  // Mocking user per instructions — replace with auth context later
-  const MOCK_USER_ID = 1;
+  const MOCK_USER_ID = currentUser.id;
 
   useEffect(() => {
     fetchComments();
