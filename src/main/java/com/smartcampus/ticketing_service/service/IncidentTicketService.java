@@ -173,7 +173,20 @@ public class IncidentTicketService {
         response.setCreatedByUserId(comment.getCreatedByUserId());
         response.setCreatedAt(comment.getCreatedAt());
         // For now mock author name based on ID
-        response.setAuthorName("User " + comment.getCreatedByUserId());
+        if (comment.getCreatedByUserId() != null) {
+            if (comment.getCreatedByUserId() == 1L) {
+                response.setAuthorName("Student User");
+            } else if (comment.getCreatedByUserId() == 99L) {
+                response.setAuthorName("Admin Manager");
+            } else if (comment.getCreatedByUserId() == 10L) {
+                response.setAuthorName("John Doe (Tech)");
+            } else {
+                response.setAuthorName("User " + comment.getCreatedByUserId());
+            }
+        } else {
+            response.setAuthorName("Unknown System User");
+        }
+        
         return response;
     }
 
