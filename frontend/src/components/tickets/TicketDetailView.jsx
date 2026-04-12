@@ -5,9 +5,11 @@ import api from '../../api/axios';
 import TicketStatusUpdater from './TicketStatusUpdater';
 import CommentSection from './CommentSection';
 import TechnicianAssigner from './TechnicianAssigner';
+import { useAuth } from '../../context/AuthContext';
 
 const TicketDetailView = () => {
   const { id } = useParams();
+  const { currentUser } = useAuth();
   const [ticket, setTicket] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -185,19 +187,24 @@ const TicketDetailView = () => {
 
         {/* Sidebar Controls */}
         <div className="xl:col-span-1">
-          <TicketStatusUpdater 
-            ticketId={ticket.id} 
-            currentStatus={ticket.status} 
-            currentNote={ticket.resolutionNote}
-            currentRejectionReason={ticket.rejectionReason}
-            onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})} 
-          />
+          
+          {['ADMIN', 'TECHNICIAN'].includes(currentUser.role) && (
+            <TicketStatusUpdater 
+              ticketId={ticket.id} 
+              currentStatus={ticket.status} 
+              currentNote={ticket.resolutionNote}
+              currentRejectionReason={ticket.rejectionReason}
+              onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})} 
+            />
+          )}
 
-          <TechnicianAssigner
-            ticketId={ticket.id}
-            currentTechnicianId={ticket.assignedTechnicianId}
-            onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})}
-          />
+          {currentUser.role === 'ADMIN' && (
+            <TechnicianAssigner
+              ticketId={ticket.id}
+              currentTechnicianId={ticket.assignedTechnicianId}
+              onUpdateSuccess={(updatedConfig) => setTicket({...ticket, ...updatedConfig})}
+            />
+          )}
           
           <div className="bg-[#061224] text-white rounded-xl p-6 shadow-sm border border-gray-800">
              <h3 className="font-bold text-lg mb-4 text-[#C4E6F1]">Reporter Info</h3>
