@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Settings, Save } from 'lucide-react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, currentRejectionReason, onUpdateSuccess }) => {
+  const { currentUser } = useAuth();
   const [status, setStatus] = useState(currentStatus);
   const [resolutionNote, setResolutionNote] = useState(currentNote || '');
   const [rejectionReason, setRejectionReason] = useState(currentRejectionReason || '');
@@ -34,7 +36,9 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, currentReje
     <div className="bg-white border text-sm border-gray-200 rounded-xl p-6 shadow-sm mb-6">
       <div className="flex items-center space-x-2 mb-4">
         <Settings className="w-5 h-5 text-gray-500" />
-        <h3 className="text-lg font-bold text-gray-800">Admin Controls: Update Status</h3>
+        <h3 className="text-lg font-bold text-gray-800">
+          {currentUser.role === 'TECHNICIAN' ? 'Technician Controls' : 'Admin Controls'}: Update Status
+        </h3>
       </div>
       
       {error && <div className="text-rose-500 mb-4 bg-rose-50 p-2 rounded-lg text-sm">{error}</div>}
