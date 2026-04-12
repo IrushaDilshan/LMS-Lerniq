@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Settings, Save } from 'lucide-react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
-const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuccess }) => {
+const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, currentRejectionReason, onUpdateSuccess }) => {
+  const { currentUser } = useAuth();
   const [status, setStatus] = useState(currentStatus);
   const [resolutionNote, setResolutionNote] = useState(currentNote || '');
+  const [rejectionReason, setRejectionReason] = useState(currentRejectionReason || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,7 +19,8 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuc
     try {
       const response = await api.put(`/tickets/${ticketId}/status`, {
         status: status,
-        resolutionNote: resolutionNote
+        resolutionNote: status === 'RESOLVED' ? resolutionNote : null,
+        rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       });
       if (response.status === 200) {
         onUpdateSuccess(response.data);
@@ -32,7 +36,9 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuc
     <div className="bg-white border text-sm border-gray-200 rounded-xl p-6 shadow-sm mb-6">
       <div className="flex items-center space-x-2 mb-4">
         <Settings className="w-5 h-5 text-gray-500" />
-        <h3 className="text-lg font-bold text-gray-800">Admin Controls: Update Status</h3>
+        <h3 className="text-lg font-bold text-gray-800">
+          {currentUser.role === 'TECHNICIAN' ? 'Technician Controls' : 'Admin Controls'}: Update Status
+        </h3>
       </div>
       
       {error && <div className="text-rose-500 mb-4 bg-rose-50 p-2 rounded-lg text-sm">{error}</div>}
@@ -48,20 +54,38 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, onUpdateSuc
             <option value="OPEN">Open</option>
             <option value="IN_PROGRESS">In Progress</option>
             <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+            <option value="REJECTED">Rejected</option>
           </select>
         </div>
         
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Resolution Note <span className="text-gray-400 font-normal">(Required if Resolved)</span></label>
-          <textarea
-            value={resolutionNote}
-            onChange={(e) => setResolutionNote(e.target.value)}
-            rows="3"
-            required={status === 'RESOLVED'}
-            placeholder="Document actions taken..."
-            className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-          ></textarea>
-        </div>
+        {status === 'RESOLVED' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Resolution Note <span className="text-gray-400 font-normal">(Required)</span></label>
+            <textarea
+              value={resolutionNote}
+              onChange={(e) => setResolutionNote(e.target.value)}
+              rows="3"
+              required={status === 'RESOLVED'}
+              placeholder="Document actions taken..."
+              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+            ></textarea>
+          </div>
+        )}
+
+        {status === 'REJECTED' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Rejection Reason <span className="text-gray-400 font-normal">(Required)</span></label>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows="3"
+              required={status === 'REJECTED'}
+              placeholder="Provide reason for rejection..."
+              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
+            ></textarea>
+          </div>
+        )}
         
         <div className="flex justify-end">
           <button

@@ -50,7 +50,7 @@ public class FileStorageService {
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            return targetLocation.toString(); // Or return a constructed URL string
+            return fileName; // Changed to return relative filename instead of absolute path
         } catch (IOException ex) {
             throw new FileStorageException("Could not store file " + originalFileName + ". Please try again!", ex);
         }
@@ -58,8 +58,8 @@ public class FileStorageService {
 
     public Resource loadFileAsResource(String fileName) {
         try {
-            // Because our fileUrl stores the full path in DB currently
-            Path filePath = Paths.get(fileName).normalize();
+            // Resolve the filename securely against our target upload directory
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
             if(resource.exists()) {
                 return resource;

@@ -1,5 +1,6 @@
 package com.smartcampus.ticketing_service.controller;
 
+import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
@@ -19,7 +20,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/tickets")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class IncidentTicketController {
 
     private final IncidentTicketService ticketService;
@@ -41,8 +41,10 @@ public class IncidentTicketController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TicketResponse>> getAllTickets() {
-        return ResponseEntity.ok(ticketService.getAllTickets());
+    public ResponseEntity<List<TicketResponse>> getAllTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) Long userId) {
+        return ResponseEntity.ok(ticketService.getAllTickets(status, userId));
     }
 
     @GetMapping("/{id}")
@@ -56,6 +58,18 @@ public class IncidentTicketController {
             @RequestBody TicketStatusUpdateRequest request) {
         TicketResponse updated = ticketService.updateTicketStatus(id, request);
         return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}/assign")
+    public ResponseEntity<?> assignTechnician(
+            @PathVariable Long id,
+            @Valid @RequestBody AssignTechnicianRequest request) {
+        try {
+            TicketResponse updated = ticketService.assignTechnician(id, request);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/{id}/comments")
@@ -74,5 +88,14 @@ public class IncidentTicketController {
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long ticketId,
+            @PathVariable Long commentId,
+            @RequestParam Long requestingUserId) {
+        ticketService.deleteComment(ticketId, commentId, requestingUserId);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

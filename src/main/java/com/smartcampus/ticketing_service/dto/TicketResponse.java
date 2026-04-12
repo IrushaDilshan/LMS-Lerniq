@@ -12,6 +12,7 @@ public class TicketResponse {
     private String category;
     private String description;
     private String resolutionNote;
+    private String rejectionReason;
     private TicketPriority priority;
     private String preferredContactDetails;
     private TicketStatus status;
@@ -20,6 +21,14 @@ public class TicketResponse {
     private Long assignedTechnicianId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public String getRejectionReason() {
+        return this.rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
 
     public Long getId() {
         return this.id;
