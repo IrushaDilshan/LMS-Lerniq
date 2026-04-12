@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, ChevronRight, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const STATUS_TABS = [
   { key: 'ALL',         label: 'All' },
@@ -14,7 +15,7 @@ const STATUS_TABS = [
 
 const StatusBadge = ({ status }) => {
   const map = {
-    OPEN:        { label: 'Open',        cls: 'bg-yellow-100 text-yellow-800 border-yellow-200',    icon: AlertCircle },
+    OPEN:        { label: 'Open',        cls: 'bg-amber-100 text-amber-800 border-amber-200 font-black', icon: AlertCircle, pulse: true },
     IN_PROGRESS: { label: 'In Progress', cls: 'bg-blue-100 text-blue-800 border-blue-200',          icon: Clock },
     RESOLVED:    { label: 'Resolved',    cls: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: CheckCircle },
     CLOSED:      { label: 'Closed',      cls: 'bg-gray-100 text-gray-600 border-gray-200',          icon: CheckCircle },
@@ -23,8 +24,10 @@ const StatusBadge = ({ status }) => {
   const cfg = map[status] || { label: status, cls: 'bg-gray-100 text-gray-700 border-gray-200', icon: AlertCircle };
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.cls}`}>
-      <Icon className="w-3 h-3" /> {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.cls} relative overflow-hidden`}>
+      {cfg.pulse && <span className="absolute inset-0 bg-amber-400/20 animate-pulse" />}
+      <Icon className={`w-3 h-3 relative z-10 ${cfg.pulse ? 'animate-bounce-subtle' : ''}`} /> 
+      <span className="relative z-10">{cfg.label}</span>
     </span>
   );
 };
@@ -45,7 +48,8 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TicketList = () => {
+const TicketList = ({ filterTechnicianId }) => {
+  const { currentUser } = useAuth();
   const [tickets, setTickets] = useState([]);       // currently displayed (filtered)
   const [allTickets, setAllTickets] = useState([]); // full list for tab counts
   const [isLoading, setIsLoading] = useState(true);
@@ -58,12 +62,17 @@ const TicketList = () => {
   useEffect(() => {
     fetchAllForCounts();
     fetchTickets(false, 'ALL');
-  }, []);
+  }, [currentUser.role, currentUser.id]);
 
   const fetchAllForCounts = async () => {
     try {
-      const res = await api.get('/tickets');
-      setAllTickets(res.data);
+      const isUser = currentUser.role === 'USER';
+      const params = isUser ? { userId: currentUser.id } : {};
+      const res = await api.get('/tickets', { params });
+      const filtered = filterTechnicianId 
+        ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
+        : res.data;
+      setAllTickets(filtered);
     } catch (_) { /* non-critical */ }
   };
 
@@ -71,9 +80,17 @@ const TicketList = () => {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const params = filter !== 'ALL' ? { status: filter } : {};
+      const isUser = currentUser.role === 'USER';
+      const params = isUser ? { userId: currentUser.id } : {};
+      if (filter !== 'ALL') params.status = filter;
+      
       const res = await api.get('/tickets', { params });
-      setTickets(res.data);
+      
+      const filtered = filterTechnicianId 
+        ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
+        : res.data;
+        
+      setTickets(filtered);
       setError('');
     } catch (err) {
       setError('Failed to load tickets. Please try again later.');
@@ -199,22 +216,31 @@ const TicketList = () => {
               <tbody className="divide-y divide-gray-50">
                 {filtered.map((ticket) => (
                   <tr key={ticket.id} onClick={() => navigate(`/tickets/${ticket.id}`)}
-                    className="group hover:bg-gray-50/80 transition-colors cursor-pointer rounded-xl">
-                    <td className="py-4 pr-4 text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors whitespace-nowrap">
-                      #{ticket.id}
+                    className={`group hover:bg-gray-50/80 transition-all cursor-pointer rounded-xl relative border-l-4 ${
+                      ticket.status === 'OPEN' ? 'border-amber-400 bg-amber-50/20 shadow-[inset_1px_0_0_rgba(251,191,36,0.3)]' : 
+                      ticket.status === 'IN_PROGRESS' ? 'border-blue-400' :
+                      'border-transparent'
+                    }`}>
+                    <td className="py-5 pr-4 pl-4 text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span>#{ticket.id}</span>
+                        {ticket.status === 'OPEN' && (
+                          <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-tighter animate-pulse shadow-sm">NEW</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-4 px-4 max-w-[220px]">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{ticket.resourceLocation}</p>
-                      <p className="text-xs text-gray-400 truncate mt-0.5">{ticket.description}</p>
+                    <td className="py-5 px-4 max-w-[220px]">
+                      <p className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">{ticket.resourceLocation}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{ticket.description}</p>
                     </td>
-                    <td className="py-4 px-4 text-sm text-gray-600 whitespace-nowrap">{ticket.category}</td>
-                    <td className="py-4 px-4"><PriorityBadge priority={ticket.priority} /></td>
-                    <td className="py-4 px-4"><StatusBadge status={ticket.status} /></td>
-                    <td className="py-4 pl-4 text-right whitespace-nowrap">
-                      <div className="text-xs text-gray-800 font-medium">
+                    <td className="py-5 px-4 text-sm text-gray-600 whitespace-nowrap font-medium">{ticket.category}</td>
+                    <td className="py-5 px-4"><PriorityBadge priority={ticket.priority} /></td>
+                    <td className="py-5 px-4"><StatusBadge status={ticket.status} /></td>
+                    <td className="py-5 pl-4 text-right whitespace-nowrap pr-2">
+                      <div className="text-xs text-gray-800 font-bold">
                         {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">
+                      <div className={`text-[11px] mt-0.5 font-medium ${ticket.status === 'OPEN' ? 'text-amber-600' : 'text-gray-400'}`}>
                         {calculateTimer(ticket.createdAt, ticket.updatedAt, ticket.status)}
                       </div>
                     </td>
