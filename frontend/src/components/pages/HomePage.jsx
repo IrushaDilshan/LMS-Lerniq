@@ -128,6 +128,16 @@ const AdminHome = ({ user, tickets }) => {
   const openCount = tickets.filter(t => t.status === 'OPEN').length;
   const inProgressCount = tickets.filter(t => t.status === 'IN_PROGRESS').length;
   
+  const isTrulyNew = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours < 24;
+  };
+  
+  const newToday = tickets.filter(t => isTrulyNew(t.createdAt) && t.status === 'OPEN').length;
+  
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex items-end justify-between">
@@ -147,7 +157,7 @@ const AdminHome = ({ user, tickets }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard icon={Users} label="Total Users" value="1,284" trend="+12%" color="text-blue-600" bg="bg-blue-50" />
-        <StatCard icon={Wrench} label="Open Tickets" value={openCount} trend={openCount > 5 ? 'High' : 'Normal'} color="text-amber-600" bg="bg-amber-50" />
+        <StatCard icon={Wrench} label="Open Tickets" value={openCount} trend={newToday > 0 ? `${newToday} New Today` : 'Stable'} color="text-amber-600" bg="bg-amber-50" />
         <StatCard icon={Activity} label="Active Tasks" value={inProgressCount} trend="Live" color="text-emerald-600" bg="bg-emerald-50" />
         <StatCard icon={TrendingUp} label="Total Requests" value={tickets.length} trend="+24%" color="text-indigo-600" bg="bg-indigo-50" />
       </div>
@@ -155,17 +165,28 @@ const AdminHome = ({ user, tickets }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-black text-gray-800">Critical Maintenance Alerts</h3>
+            <h3 className="text-xl font-black text-gray-800">Critical & Recent Alerts</h3>
             <button onClick={() => navigate('/tickets')} className="text-blue-600 font-bold text-xs uppercase tracking-widest">View All</button>
           </div>
           <div className="space-y-4">
-            {tickets.filter(t => t.priority === 'CRITICAL' || t.priority === 'HIGH').slice(0, 3).map(ticket => (
+            {tickets
+              .filter(t => t.priority === 'CRITICAL' || t.priority === 'HIGH' || isTrulyNew(t.createdAt))
+              .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .slice(0, 4)
+              .map(ticket => (
               <div key={ticket.id} onClick={() => navigate(`/tickets/${ticket.id}`)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group cursor-pointer">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${ticket.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-500' : 'bg-orange-50 text-orange-500'}`}>
-                  <ShieldCheck className="w-6 h-6" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                  ticket.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-500' : 
+                  isTrulyNew(ticket.createdAt) ? 'bg-blue-50 text-blue-500' :
+                  'bg-orange-50 text-orange-500'
+                }`}>
+                  {isTrulyNew(ticket.createdAt) ? <Zap className="w-5 h-5 animate-pulse" /> : <ShieldCheck className="w-6 h-6" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-800 text-sm truncate">{ticket.category}: {ticket.resourceLocation}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-800 text-sm truncate">{ticket.category}: {ticket.resourceLocation}</p>
+                    {isTrulyNew(ticket.createdAt) && <span className="bg-blue-100 text-blue-700 text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">New</span>}
+                  </div>
                   <p className="text-xs text-gray-400 truncate opacity-70">{ticket.description}</p>
                 </div>
                 <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
