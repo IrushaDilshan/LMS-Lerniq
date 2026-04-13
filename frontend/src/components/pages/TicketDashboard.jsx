@@ -23,6 +23,7 @@ const TicketDashboard = () => {
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0, total: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [ticketListKey, setTicketListKey] = useState(0); // force refresh after submit
+  const [newlySubmittedId, setNewlySubmittedId] = useState(null);
 
   useEffect(() => {
     fetchStats();
@@ -48,7 +49,8 @@ const TicketDashboard = () => {
     }
   };
 
-  const handleTicketSubmitted = () => {
+  const handleTicketSubmitted = (id) => {
+    setNewlySubmittedId(id);
     setActiveTab('list');
     setTicketListKey(k => k + 1); // re-render TicketList & re-fetch stats
   };
@@ -115,7 +117,7 @@ const TicketDashboard = () => {
       <div className="animate-fade-in">
         {activeTab === 'list' ? (
           <div className="rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-blue-900/5 bg-white">
-             <TicketList key={ticketListKey} />
+             <TicketList key={ticketListKey} highlightTicketId={newlySubmittedId} />
           </div>
         ) : (
           <TicketSubmissionFormWrapper onSuccess={handleTicketSubmitted} />
@@ -187,7 +189,8 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
 
       if (res.status === 201 || res.status === 200) {
         setSubmitStatus('success');
-        setTimeout(() => { if (onSuccess) onSuccess(); }, 1500);
+        const newId = res.data.id;
+        setTimeout(() => { if (onSuccess) onSuccess(newId); }, 1500);
         setFormData({ resourceLocation: '', category: '', description: '', priority: 'LOW', preferredContactDetails: '' });
         setFiles([]);
       }
