@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, ChevronRight, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -48,7 +48,7 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TicketList = ({ filterTechnicianId }) => {
+const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
   const { currentUser } = useAuth();
   const [tickets, setTickets] = useState([]);       // currently displayed (filtered)
   const [allTickets, setAllTickets] = useState([]); // full list for tab counts
@@ -57,6 +57,17 @@ const TicketList = ({ filterTechnicianId }) => {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const newTicketIdFromState = location.state?.newTicketId;
+  const effectiveNewTicketId = highlightTicketId || newTicketIdFromState;
+
+  const isTrulyNew = (createdAt) => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffMs = now - createdDate;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours < 24; 
+  };
 
   // Fetch full list once for tab counts, then fetch filtered list
   useEffect(() => {
@@ -86,11 +97,11 @@ const TicketList = ({ filterTechnicianId }) => {
       
       const res = await api.get('/tickets', { params });
       
-      const filtered = filterTechnicianId 
-        ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
-        : res.data;
-        
-      setTickets(filtered);
+        const sorted = (filterTechnicianId 
+          ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
+          : res.data).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          
+        setTickets(sorted);
       setError('');
     } catch (err) {
       setError('Failed to load tickets. Please try again later.');
@@ -217,15 +228,20 @@ const TicketList = ({ filterTechnicianId }) => {
                 {filtered.map((ticket) => (
                   <tr key={ticket.id} onClick={() => navigate(`/tickets/${ticket.id}`)}
                     className={`group hover:bg-gray-50/80 transition-all cursor-pointer rounded-xl relative border-l-4 ${
-                      ticket.status === 'OPEN' ? 'border-amber-400 bg-amber-50/20 shadow-[inset_1px_0_0_rgba(251,191,36,0.3)]' : 
+                      ticket.id === effectiveNewTicketId ? 'border-blue-500 bg-blue-50/50 shadow-[0_0_15px_rgba(59,130,246,0.1)]' :
+                      (ticket.status === 'OPEN' && isTrulyNew(ticket.createdAt)) ? 'border-amber-400 bg-amber-50/20 shadow-[inset_1px_0_0_rgba(251,191,36,0.3)]' : 
+                      ticket.status === 'OPEN' ? 'border-amber-200 bg-amber-50/5' :
                       ticket.status === 'IN_PROGRESS' ? 'border-blue-400' :
                       'border-transparent'
                     }`}>
                     <td className="py-5 pr-4 pl-4 text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span>#{ticket.id}</span>
-                        {ticket.status === 'OPEN' && (
-                          <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-tighter animate-pulse shadow-sm">NEW</span>
+                        {ticket.id === effectiveNewTicketId && (
+                           <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-widest font-black animate-bounce shadow-md">JUST SUBMITTED</span>
+                        )}
+                        {ticket.status === 'OPEN' && isTrulyNew(ticket.createdAt) && ticket.id !== effectiveNewTicketId && (
+                          <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-tighter animate-pulse shadow-sm font-black">NEW</span>
                         )}
                       </div>
                     </td>
