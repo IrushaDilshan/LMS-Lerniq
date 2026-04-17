@@ -112,12 +112,6 @@ public class IncidentTicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
 
         ticket.setAssignedTechnicianId(request.getTechnicianId());
-
-        // Auto-advance status: OPEN → IN_PROGRESS when a technician is assigned
-        if (ticket.getStatus() == TicketStatus.OPEN) {
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
-        }
-
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
     }
