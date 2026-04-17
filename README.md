@@ -1,4 +1,4 @@
-# Smart Campus Operations Hub
+# UniOps
 
 A university is modernizing its day-to-day operations. The university needs a single web platform to manage facility and asset bookings (rooms, labs, equipment) and maintenance/incident handling (fault reports, technician updates, resolutions). The platform supports clear workflows, role-based access, and strong auditability.
 
@@ -17,9 +17,9 @@ This module represents the complete backend API handling infrastructure and fron
 
 ### 🔧 Backend Setup
 - **Dependencies**: Ensure MySQL runs locally on port 3306. 
-- **Database**: Requires `lms_ticketing_db` database (tables are auto-created/updated via Hibernate property `update`).
-- **Run Application**: Execute `./mvnw spring-boot:run` in terminal. The backend will operate on port **`8084`**.
-- **API Documentation**: Interactive OpenAPI documentation is automatically served and browsable via [Swagger UI](http://localhost:8084/swagger-ui.html).
+- **Database**: Requires `uniops_ticketing_db` database (tables are auto-created/updated via Hibernate property `update`).
+- **Run Application**: Execute `./mvnw spring-boot:run` in terminal. The backend will operate on port **`8088`**.
+- **API Documentation**: Interactive OpenAPI documentation is automatically served and browsable via [Swagger UI](http://localhost:8088/swagger-ui.html).
 
 ### 🔗 Service API Endpoints 
 
@@ -39,4 +39,4 @@ This module represents the complete backend API handling infrastructure and fron
 2. Run `npm install` or `npm ci` to fetch package lock node_modules.
 3. Start the Vite server locally using `npm run dev`. The React App runs natively on port **`5173`**.
 
-> **Note**: An exported `LMS_Ticketing_Postman_Collection.json` is packaged within the root workspace mapping all endpoint templates & responses for grading validators.
+> **Note**: An exported `UniOps_Ticketing_Postman_Collection.json` is packaged within the root workspace mapping all endpoint templates & responses for grading validators.

@@ -63,7 +63,7 @@ const assignmentService = {
 
   // Download URL constructor
   getDownloadUrl: (submissionId) => {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8084/api/v1';
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8088/api/v1';
     return `${baseURL}/assignments/submissions/${submissionId}/download`;
   }
 };
