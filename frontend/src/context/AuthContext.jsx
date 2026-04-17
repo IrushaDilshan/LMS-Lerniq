@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
   });
 
-  const mockLoginAs = (role) => {
+  const mockLoginAs = useCallback((role) => {
     switch (role) {
       case 'ADMIN':
         setCurrentUser({ id: 99, name: 'Admin Manager', role: 'ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' });
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser({ id: 1, name: 'Student User', role: 'USER', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' });
         break;
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ currentUser, mockLoginAs }}>
