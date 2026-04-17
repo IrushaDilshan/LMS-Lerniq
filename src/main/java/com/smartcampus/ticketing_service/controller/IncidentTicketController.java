@@ -4,6 +4,7 @@ import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
+import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.model.TicketStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/v1/tickets")
 public class IncidentTicketController {
 
@@ -58,6 +60,23 @@ public class IncidentTicketController {
             @RequestBody TicketStatusUpdateRequest request) {
         TicketResponse updated = ticketService.updateTicketStatus(id, request);
         return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponse> updateTicket(
+            @PathVariable Long id,
+            @RequestParam Long requestingUserId,
+            @Valid @RequestBody TicketUpdateRequest request) {
+        TicketResponse updated = ticketService.updateTicket(id, request, requestingUserId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTicket(
+            @PathVariable Long id,
+            @RequestParam Long requestingUserId) {
+        ticketService.deleteTicket(id, requestingUserId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/assign")
