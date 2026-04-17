@@ -13,10 +13,11 @@ const STATUS_TABS = [
   { key: 'REJECTED',    label: 'Rejected' },
 ];
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ ticket }) => {
+  const status = ticket.status;
   const map = {
     OPEN:        { label: 'Open',        cls: 'bg-amber-100 text-amber-800 border-amber-200 font-black', icon: AlertCircle, pulse: true },
-    IN_PROGRESS: { label: 'In Progress', cls: 'bg-blue-100 text-blue-800 border-blue-200',          icon: Clock },
+    IN_PROGRESS: { label: ticket.resolutionNote === 'STARTED_BY_TECH' ? 'Technician Working' : 'Process Started', cls: 'bg-blue-100 text-blue-800 border-blue-200', icon: Clock },
     RESOLVED:    { label: 'Resolved',    cls: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: CheckCircle },
     CLOSED:      { label: 'Closed',      cls: 'bg-gray-100 text-gray-600 border-gray-200',          icon: CheckCircle },
     REJECTED:    { label: 'Rejected',    cls: 'bg-rose-100 text-rose-700 border-rose-200',          icon: AlertCircle },
@@ -251,7 +252,7 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                     </td>
                     <td className="py-5 px-4 text-sm text-gray-600 whitespace-nowrap font-medium">{ticket.category}</td>
                     <td className="py-5 px-4"><PriorityBadge priority={ticket.priority} /></td>
-                    <td className="py-5 px-4"><StatusBadge status={ticket.status} /></td>
+                    <td className="py-5 px-4"><StatusBadge ticket={ticket} /></td>
                     <td className="py-5 pl-4 text-right whitespace-nowrap pr-2">
                       <div className="text-xs text-gray-800 font-bold">
                         {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
