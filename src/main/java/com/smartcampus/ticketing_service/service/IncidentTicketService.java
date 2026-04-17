@@ -13,6 +13,7 @@ import com.smartcampus.ticketing_service.repository.TicketCommentRepository;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
+import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -105,6 +106,47 @@ public class IncidentTicketService {
         }
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
+    }
+
+    public TicketResponse updateTicket(Long id, TicketUpdateRequest request, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        // Ownership check — Only the student who created the ticket can edit it
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to edit this ticket as you are not the author.");
+        }
+
+        // Only allow editing if the ticket is still OPEN
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be edited while they are in OPEN status.");
+        }
+
+        ticket.setResourceLocation(request.getResourceLocation());
+        ticket.setCategory(request.getCategory());
+        ticket.setDescription(request.getDescription());
+        ticket.setPriority(request.getPriority());
+        ticket.setPreferredContactDetails(request.getPreferredContactDetails());
+
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public void deleteTicket(Long id, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        // Ownership check — Only the student who created the ticket can delete it
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to delete this ticket as you are not the author.");
+        }
+
+        // Only allow deleting if the ticket is still OPEN
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be deleted while they are in OPEN status.");
+        }
+
+        ticketRepository.delete(ticket);
     }
 
     public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
