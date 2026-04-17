@@ -60,6 +60,17 @@ public class IncidentTicket {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketComment> comments = new ArrayList<>();
+
+    public List<TicketComment> getComments() {
+        return this.comments;
+    }
+
+    public void setComments(List<TicketComment> comments) {
+        this.comments = comments;
+    }
+
     public String getRejectionReason() {
         return this.rejectionReason;
     }
