@@ -2,6 +2,7 @@
 
 @theme {
   --animate-bounce-subtle: bounce-subtle 2s infinite;
+  --animate-spin-slow: spin 3s linear infinite;
   
   @keyframes bounce-subtle {
     0%, 100% {

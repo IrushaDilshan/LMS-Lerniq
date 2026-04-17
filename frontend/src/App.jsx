@@ -20,7 +20,7 @@ function AppContent() {
     { name: 'Resources', path: '/resources', icon: <BookOpen className="w-5 h-5 flex-shrink-0" />, roles: ['USER', 'ADMIN'] },
     { name: 'Bookings', path: '/bookings', icon: <Calendar className="w-5 h-5 flex-shrink-0" />, roles: ['USER', 'ADMIN'] },
     { name: 'Maintenance Tickets', path: '/tickets', icon: <Wrench className="w-5 h-5 flex-shrink-0" />, roles: ['USER', 'ADMIN'] },
-    { name: 'Technician Portal', path: '/technician', icon: <Briefcase className="w-5 h-5 flex-shrink-0" />, roles: ['TECHNICIAN', 'ADMIN'] },
+    { name: 'Technician Portal', path: '/technician', icon: <Briefcase className="w-5 h-5 flex-shrink-0" />, roles: ['TECHNICIAN'] },
     { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5 flex-shrink-0" />, roles: ['USER', 'ADMIN', 'TECHNICIAN'] },
   ].filter(link => link.roles.includes(currentUser.role));
 
@@ -118,7 +118,7 @@ function AppContent() {
               <Route path="/bookings" element={<div className="flex flex-col items-center justify-center h-96 grayscale opacity-30"><Calendar className="w-20 h-20 mb-4" /><p className="font-black uppercase tracking-[4px] text-xs">Module B (Coming Soon)</p></div>} />
               <Route path="/tickets" element={<TicketDashboard />} />
               <Route path="/tickets/:id" element={<TicketDetailView />} />
-              <Route path="/technician" element={<TechnicianDashboard />} />
+              <Route path="/technician" element={currentUser.role === 'TECHNICIAN' ? <TechnicianDashboard /> : <div className="text-center py-20"><h1 className="text-2xl font-black text-gray-900">Access Denied</h1><p className="text-gray-500 mt-2">This portal is reserved for technicians.</p></div>} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </div>
