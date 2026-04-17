@@ -15,7 +15,7 @@ const TicketDetailView = () => {
   const [error, setError] = useState('');
 
   // Fallback dev base URL for images since they may be served from backend static folder
-  const IMAGE_BASE_URL = 'http://localhost:8084'; 
+  const IMAGE_BASE_URL = 'http://localhost:8088'; 
 
   useEffect(() => {
     fetchTicketDetail();

@@ -143,7 +143,7 @@ const AdminHome = ({ user, tickets }) => {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-4xl font-black text-[#061224] tracking-tight">System Pulse</h1>
-          <p className="text-gray-500 font-medium">Lerniq Administrative Control Center • <span className="text-emerald-500 font-bold animate-pulse">Live Dashboard</span></p>
+          <p className="text-gray-500 font-medium">UniOps Administrative Control Center • <span className="text-emerald-500 font-bold animate-pulse">Live Dashboard</span></p>
         </div>
         <div className="flex gap-3">
           <button className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">

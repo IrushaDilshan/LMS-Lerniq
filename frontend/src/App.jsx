@@ -32,7 +32,7 @@ function AppContent() {
           <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
             <BookOpen className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-black tracking-tight hidden lg:block">Lerniq</span>
+          <span className="text-2xl font-black tracking-tight hidden lg:block">UniOps</span>
         </div>
 
         <nav className="mt-10 px-4 space-y-3">
