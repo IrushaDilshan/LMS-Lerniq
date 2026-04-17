@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Home, BookOpen, Calendar, Wrench, Settings, Bell, MessageSquare, Menu, Briefcase, Shield, User } from 'lucide-react';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, mockLoginAs } = useAuth();
   const isActive = (path) => location.pathname === path;
 
@@ -80,13 +81,6 @@ function AppContent() {
           </div>
 
           <div className="flex items-center gap-10">
-            {/* Developer Testing Tool (Role Switcher) */}
-            <div className="bg-gray-50 p-1 rounded-2xl flex items-center gap-1 border border-gray-100 hidden xl:flex">
-               <button onClick={() => mockLoginAs('USER')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='USER' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>User</button>
-               <button onClick={() => mockLoginAs('ADMIN')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='ADMIN' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>Admin</button>
-               <button onClick={() => mockLoginAs('TECHNICIAN')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='TECHNICIAN' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>Tech</button>
-            </div>
-
             <div className="flex items-center gap-3 pr-6 border-r border-gray-100">
                <button className="p-2.5 text-gray-400 hover:text-[#061224] transition-colors relative">
                  <Bell className="w-5 h-5" />
@@ -113,6 +107,11 @@ function AppContent() {
         <div className="flex-1 overflow-y-auto bg-[#F8FAFC]">
           <div className="p-8 pb-20">
             <Routes>
+              {/* Role Switching Shortcut Routes */}
+              <Route path="/admin" element={<RoleRedirect role="ADMIN" />} />
+              <Route path="/tech" element={<RoleRedirect role="TECHNICIAN" />} />
+              <Route path="/user" element={<RoleRedirect role="USER" />} />
+
               <Route path="/" element={<HomePage />} />
               <Route path="/resources" element={<ResourcesPage />} />
               <Route path="/bookings" element={<div className="flex flex-col items-center justify-center h-96 grayscale opacity-30"><Calendar className="w-20 h-20 mb-4" /><p className="font-black uppercase tracking-[4px] text-xs">Module B (Coming Soon)</p></div>} />
@@ -126,6 +125,17 @@ function AppContent() {
       </div>
     </div>
   );
+}
+
+// Helper component to handle role switching via URL
+function RoleRedirect({ role }) {
+  const { mockLoginAs } = useAuth();
+  
+  useEffect(() => {
+    mockLoginAs(role);
+  }, [role, mockLoginAs]);
+
+  return <Navigate to="/" replace />;
 }
 
 function App() {
