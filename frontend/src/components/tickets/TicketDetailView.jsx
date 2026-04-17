@@ -42,7 +42,12 @@ const TicketDetailView = () => {
       case 'OPEN':
         return <span className="px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><AlertCircle className="w-4 h-4"/> Open</span>;
       case 'IN_PROGRESS':
-        return <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><Clock className="w-4 h-4"/> In Progress</span>;
+        return (
+          <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold flex items-center gap-1.5">
+            <Clock className="w-4 h-4 animate-spin-slow"/> 
+            {ticket.resolutionNote === 'STARTED_BY_TECH' ? 'Technician Working' : 'Process Started'}
+          </span>
+        );
       case 'RESOLVED':
         return <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4"/> Resolved</span>;
       case 'CLOSED':
