@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class TicketResponse {
-    private Long id;
+    private String id;
     private String resourceLocation;
     private String category;
     private String description;
@@ -30,11 +30,11 @@ public class TicketResponse {
         this.rejectionReason = rejectionReason;
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
     
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

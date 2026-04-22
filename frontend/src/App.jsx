@@ -1,6 +1,7 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Home, BookOpen, Calendar, Wrench, Settings, Bell, MessageSquare, Menu, Briefcase, Shield, User } from 'lucide-react';
+import LandingPage from './components/pages/LandingPage';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
 import ResourcesPage from './components/pages/ResourcesPage';
@@ -8,11 +9,27 @@ import TicketDashboard from './components/pages/TicketDashboard';
 import TicketDetailView from './components/tickets/TicketDetailView';
 import TechnicianDashboard from './components/pages/TechnicianDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LogOut } from 'lucide-react';
 
 function AppContent() {
   const location = useLocation();
-  const { currentUser, mockLoginAs } = useAuth();
+  const navigate = useNavigate();
+  const { currentUser, mockLoginAs, logout } = useAuth();
   const isActive = (path) => location.pathname === path;
+
+  // Role switching shortcuts via URL
+  useEffect(() => {
+    if (location.pathname === '/admin') {
+      mockLoginAs('ADMIN');
+      navigate('/', { replace: true });
+    } else if (location.pathname === '/tech') {
+      mockLoginAs('TECHNICIAN');
+      navigate('/', { replace: true });
+    } else if (location.pathname === '/user_role') { // Avoid conflict with potential /user page
+      mockLoginAs('USER');
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, mockLoginAs, navigate]);
 
   // Filter links based on role mapping
   const navLinks = [
@@ -28,12 +45,12 @@ function AppContent() {
     <div className="flex h-screen bg-[#F8FAFC] font-sans">
       {/* ── Sidebar ── */}
       <aside className="w-[84px] lg:w-[280px] bg-[#061224] text-white flex flex-col h-full flex-shrink-0 shadow-2xl transition-all duration-300 relative z-30">
-        <div className="p-6 flex items-center gap-3">
+        <Link to="/" className="p-6 flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <span className="text-2xl font-black tracking-tight hidden lg:block">UniOps</span>
-        </div>
+        </Link>
 
         <nav className="mt-10 px-4 space-y-3">
           {navLinks.map((link) => (
@@ -52,12 +69,20 @@ function AppContent() {
           ))}
         </nav>
 
-        <div className="mt-auto p-6 mb-4">
-           <div className="bg-white/5 rounded-2xl p-4 hidden lg:block border border-white/10">
+        <div className="mt-auto p-6 mb-4 space-y-3">
+           <div className="bg-white/5 rounded-2xl p-4 hidden lg:block border border-white/10 mb-2">
               <p className="text-[10px] font-black uppercase tracking-[2px] text-blue-400 mb-2">Pro Support</p>
               <p className="text-xs text-gray-400 font-medium leading-relaxed">Need help with your {currentUser.role.toLowerCase()} portal?</p>
               <button className="mt-4 w-full py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Contact Dev</button>
            </div>
+           
+           <button 
+             onClick={() => { logout(); navigate('/'); }}
+             className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-sm"
+           >
+             <LogOut className="w-5 h-5" />
+             <span className="hidden lg:block">Sign Out</span>
+           </button>
         </div>
       </aside>
 
@@ -80,12 +105,7 @@ function AppContent() {
           </div>
 
           <div className="flex items-center gap-10">
-            {/* Developer Testing Tool (Role Switcher) */}
-            <div className="bg-gray-50 p-1 rounded-2xl flex items-center gap-1 border border-gray-100 hidden xl:flex">
-               <button onClick={() => mockLoginAs('USER')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='USER' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>User</button>
-               <button onClick={() => mockLoginAs('ADMIN')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='ADMIN' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>Admin</button>
-               <button onClick={() => mockLoginAs('TECHNICIAN')} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentUser.role==='TECHNICIAN' ? 'bg-[#061224] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>Tech</button>
-            </div>
+            {/* Role switcher was here - now handled by /admin and /tech routes */}
 
             <div className="flex items-center gap-3 pr-6 border-r border-gray-100">
                <button className="p-2.5 text-gray-400 hover:text-[#061224] transition-colors relative">
@@ -132,10 +152,15 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppContent />
+        <AuthWrapper />
       </Router>
     </AuthProvider>
   );
+}
+
+function AuthWrapper() {
+  const { currentUser } = useAuth();
+  return currentUser ? <AppContent /> : <LandingPage />;
 }
 
 export default App;

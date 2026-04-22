@@ -9,11 +9,10 @@ import com.smartcampus.ticketing_service.model.IncidentTicket;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.model.TicketComment;
 import com.smartcampus.ticketing_service.repository.IncidentTicketRepository;
-import com.smartcampus.ticketing_service.repository.TicketCommentRepository;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
-import lombok.RequiredArgsConstructor;
+import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,12 +24,10 @@ public class IncidentTicketService {
 
     private final IncidentTicketRepository ticketRepository;
     private final FileStorageService fileStorageService;
-    private final TicketCommentRepository ticketCommentRepository;
 
-    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService, TicketCommentRepository ticketCommentRepository) {
+    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService) {
         this.ticketRepository = ticketRepository;
         this.fileStorageService = fileStorageService;
-        this.ticketCommentRepository = ticketCommentRepository;
     }
 
     public TicketResponse createTicket(TicketCreateRequest request, List<MultipartFile> files) {
@@ -59,10 +56,9 @@ public class IncidentTicketService {
                     imageUrls.add(savedPath);
                 }
             }
+            ticket.setAttachmentUrls(imageUrls);
+            ticket = ticketRepository.save(ticket);
         }
-        
-        ticket.setAttachmentUrls(imageUrls);
-        ticket = ticketRepository.save(ticket);
 
         return mapToResponse(ticket);
     }
@@ -71,29 +67,25 @@ public class IncidentTicketService {
         List<IncidentTicket> tickets;
 
         if (status != null && userId != null) {
-            // Both filters applied
             tickets = ticketRepository.findByStatusAndCreatedByUserId(status, userId);
         } else if (status != null) {
-            // Filter by status only
             tickets = ticketRepository.findByStatus(status);
         } else if (userId != null) {
-            // Filter by user only
             tickets = ticketRepository.findByCreatedByUserId(userId);
         } else {
-            // No filter — return all
             tickets = ticketRepository.findAll();
         }
 
         return tickets.stream().map(this::mapToResponse).toList();
     }
 
-    public TicketResponse getTicketById(Long id) {
+    public TicketResponse getTicketById(String id) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         return mapToResponse(ticket);
     }
 
-    public TicketResponse updateTicketStatus(Long id, TicketStatusUpdateRequest updateRequest) {
+    public TicketResponse updateTicketStatus(String id, TicketStatusUpdateRequest updateRequest) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         ticket.setStatus(updateRequest.getStatus());
@@ -107,7 +99,44 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+    public TicketResponse updateTicket(String id, TicketUpdateRequest request, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to edit this ticket as you are not the author.");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be edited while they are in OPEN status.");
+        }
+
+        ticket.setResourceLocation(request.getResourceLocation());
+        ticket.setCategory(request.getCategory());
+        ticket.setDescription(request.getDescription());
+        ticket.setPriority(request.getPriority());
+        ticket.setPreferredContactDetails(request.getPreferredContactDetails());
+
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public void deleteTicket(String id, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to delete this ticket as you are not the author.");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be deleted while they are in OPEN status.");
+        }
+
+        ticketRepository.delete(ticket);
+    }
+
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
 
@@ -116,48 +145,43 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<CommentResponse> getComments(Long ticketId) {
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
-        }
-        return ticketCommentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
-                .stream().map(this::mapToCommentResponse).toList();
+    public List<CommentResponse> getComments(String ticketId) {
+        IncidentTicket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
+        return ticket.getComments().stream()
+                .sorted((c1, c2) -> c1.getCreatedAt().compareTo(c2.getCreatedAt()))
+                .map(this::mapToCommentResponse).toList();
     }
 
-    public CommentResponse addComment(Long ticketId, CommentCreateRequest request) {
+    public CommentResponse addComment(String ticketId, CommentCreateRequest request) {
         IncidentTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 
         TicketComment comment = new TicketComment();
-        comment.setTicket(ticket);
         comment.setContent(request.getContent());
         comment.setCreatedByUserId(request.getCreatedByUserId());
         
-        comment = ticketCommentRepository.save(comment);
+        ticket.getComments().add(comment);
+        ticketRepository.save(ticket);
+        
         return mapToCommentResponse(comment);
     }
 
-    public void deleteComment(Long ticketId, Long commentId, Long requestingUserId) {
-        // Verify the ticket exists
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
-        }
+    public void deleteComment(String ticketId, String commentId, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 
-        // Verify the comment exists
-        TicketComment comment = ticketCommentRepository.findById(commentId)
+        TicketComment comment = ticket.getComments().stream()
+                .filter(c -> c.getId().equals(commentId))
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
 
-        // Verify the comment belongs to this ticket
-        if (!comment.getTicket().getId().equals(ticketId)) {
-            throw new ResourceNotFoundException("Comment " + commentId + " does not belong to ticket " + ticketId);
-        }
-
-        // Ownership check — only the author can delete their own comment
         if (!comment.getCreatedByUserId().equals(requestingUserId)) {
             throw new UnauthorizedException("You can only delete your own comments.");
         }
 
-        ticketCommentRepository.delete(comment);
+        ticket.getComments().removeIf(c -> c.getId().equals(commentId));
+        ticketRepository.save(ticket);
     }
 
     private CommentResponse mapToCommentResponse(TicketComment comment) {
@@ -166,7 +190,6 @@ public class IncidentTicketService {
         response.setContent(comment.getContent());
         response.setCreatedByUserId(comment.getCreatedByUserId());
         response.setCreatedAt(comment.getCreatedAt());
-        // For now mock author name based on ID
         if (comment.getCreatedByUserId() != null) {
             if (comment.getCreatedByUserId() == 1L) {
                 response.setAuthorName("Student User");
