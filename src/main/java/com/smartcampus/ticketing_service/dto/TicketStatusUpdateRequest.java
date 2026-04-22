@@ -6,6 +6,7 @@ public class TicketStatusUpdateRequest {
 
     private TicketStatus status;
     private String resolutionNote;
+    private String rejectionReason;
 
     public TicketStatus getStatus() {
         return this.status;
@@ -13,6 +14,14 @@ public class TicketStatusUpdateRequest {
 
     public void setStatus(TicketStatus status) {
         this.status = status;
+    }
+
+    public String getRejectionReason() {
+        return this.rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 
     public String getResolutionNote() {

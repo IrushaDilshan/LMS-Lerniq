@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UploadCloud, X, Send, AlertCircle, CheckCircle, Ticket } from 'lucide-react';
 import api from '../../api/axios';
 
@@ -15,6 +16,7 @@ const TicketSubmissionForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
   const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -80,6 +82,11 @@ const TicketSubmissionForm = () => {
           preferredContactDetails: '',
         });
         setFiles([]);
+        
+        // Wait 2 seconds then navigate to dashboard
+        setTimeout(() => {
+          navigate('/dashboard', { state: { newTicketId: response.data.id, justSubmitted: true } });
+        }, 2000);
       }
     } catch (error) {
       setSubmitStatus('error');

@@ -12,8 +12,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Assessment & Submission API")
+                        .title("UniOps Ticketing API")
                         .version("1.0.0")
-                        .description("API documentation for the LMS Assessment and Submission Microservice. Allows instructors to manage quizzes and assignments, and students to submit attempts and files."));
+                        .description("API documentation for the UniOps Maintenance & Incident Ticketing Service."));
     }
 }

@@ -1,8 +1,10 @@
 package com.smartcampus.ticketing_service.service;
 
+import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
+import com.smartcampus.ticketing_service.exception.UnauthorizedException;
 import com.smartcampus.ticketing_service.model.IncidentTicket;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.model.TicketComment;
@@ -65,8 +67,24 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<TicketResponse> getAllTickets() {
-        return ticketRepository.findAll().stream().map(this::mapToResponse).toList();
+    public List<TicketResponse> getAllTickets(TicketStatus status, Long userId) {
+        List<IncidentTicket> tickets;
+
+        if (status != null && userId != null) {
+            // Both filters applied
+            tickets = ticketRepository.findByStatusAndCreatedByUserId(status, userId);
+        } else if (status != null) {
+            // Filter by status only
+            tickets = ticketRepository.findByStatus(status);
+        } else if (userId != null) {
+            // Filter by user only
+            tickets = ticketRepository.findByCreatedByUserId(userId);
+        } else {
+            // No filter — return all
+            tickets = ticketRepository.findAll();
+        }
+
+        return tickets.stream().map(this::mapToResponse).toList();
     }
 
     public TicketResponse getTicketById(Long id) {
@@ -82,6 +100,18 @@ public class IncidentTicketService {
         if (updateRequest.getResolutionNote() != null) {
             ticket.setResolutionNote(updateRequest.getResolutionNote());
         }
+        if (updateRequest.getRejectionReason() != null) {
+            ticket.setRejectionReason(updateRequest.getRejectionReason());
+        }
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+
+        ticket.setAssignedTechnicianId(request.getTechnicianId());
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
     }
@@ -107,6 +137,29 @@ public class IncidentTicketService {
         return mapToCommentResponse(comment);
     }
 
+    public void deleteComment(Long ticketId, Long commentId, Long requestingUserId) {
+        // Verify the ticket exists
+        if (!ticketRepository.existsById(ticketId)) {
+            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
+        }
+
+        // Verify the comment exists
+        TicketComment comment = ticketCommentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+
+        // Verify the comment belongs to this ticket
+        if (!comment.getTicket().getId().equals(ticketId)) {
+            throw new ResourceNotFoundException("Comment " + commentId + " does not belong to ticket " + ticketId);
+        }
+
+        // Ownership check — only the author can delete their own comment
+        if (!comment.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You can only delete your own comments.");
+        }
+
+        ticketCommentRepository.delete(comment);
+    }
+
     private CommentResponse mapToCommentResponse(TicketComment comment) {
         CommentResponse response = new CommentResponse();
         response.setId(comment.getId());
@@ -114,7 +167,20 @@ public class IncidentTicketService {
         response.setCreatedByUserId(comment.getCreatedByUserId());
         response.setCreatedAt(comment.getCreatedAt());
         // For now mock author name based on ID
-        response.setAuthorName("User " + comment.getCreatedByUserId());
+        if (comment.getCreatedByUserId() != null) {
+            if (comment.getCreatedByUserId() == 1L) {
+                response.setAuthorName("Student User");
+            } else if (comment.getCreatedByUserId() == 99L) {
+                response.setAuthorName("Admin Manager");
+            } else if (comment.getCreatedByUserId() == 10L) {
+                response.setAuthorName("John Doe (Tech)");
+            } else {
+                response.setAuthorName("User " + comment.getCreatedByUserId());
+            }
+        } else {
+            response.setAuthorName("Unknown System User");
+        }
+        
         return response;
     }
 
@@ -125,6 +191,7 @@ public class IncidentTicketService {
         response.setCategory(ticket.getCategory());
         response.setDescription(ticket.getDescription());
         response.setResolutionNote(ticket.getResolutionNote());
+        response.setRejectionReason(ticket.getRejectionReason());
         response.setPriority(ticket.getPriority());
         response.setPreferredContactDetails(ticket.getPreferredContactDetails());
         response.setStatus(ticket.getStatus());
