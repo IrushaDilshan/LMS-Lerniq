@@ -39,46 +39,46 @@ const UserHome = ({ user, tickets }) => {
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
-              <Zap className="w-3 h-3 text-amber-400" /> Academic Excellence
+              <ShieldCheck className="w-3 h-3 text-emerald-400" /> Professional Campus Operations
             </div>
             <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
               Welcome back,<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-indigo-200">{user.name}</span>
             </h1>
             <p className="text-blue-100/70 max-w-md text-lg leading-relaxed mb-8">
-              Your learning portal is synchronized. You have {myTicketsCount} maintenance ticket{myTicketsCount !== 1 ? 's' : ''} currently in the system.
+              UniOps Hub is synchronized. You have {myTicketsCount} active service request{myTicketsCount !== 1 ? 's' : ''} in progress.
             </p>
             <div className="flex flex-wrap gap-4">
               <button 
                 onClick={() => navigate('/bookings')} 
                 className="px-8 py-3.5 bg-white text-[#061224] rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-all shadow-xl shadow-blue-900/40"
               >
-                View Bookings <Calendar className="w-4 h-4" />
+                Book a Resource <Calendar className="w-4 h-4" />
               </button>
-              <button className="px-8 py-3.5 bg-white/10 text-white border border-white/20 rounded-2xl font-bold flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-md">
-                Check Grades <Award className="w-4 h-4" />
+              <button onClick={() => navigate('/tickets')} className="px-8 py-3.5 bg-white/10 text-white border border-white/20 rounded-2xl font-bold flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-md">
+                Report Issue <Wrench className="w-4 h-4" />
               </button>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4 h-fit">
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
-                <BookOpen className="w-8 h-8 text-blue-300 mb-3" />
-                <p className="text-2xl font-bold">12</p>
-                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">Active Courses</p>
+                <Calendar className="w-8 h-8 text-blue-300 mb-3" />
+                <p className="text-2xl font-bold">03</p>
+                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">Active Bookings</p>
             </div>
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl mt-6">
-                <Clock className="w-8 h-8 text-amber-300 mb-3" />
-                <p className="text-2xl font-bold">97%</p>
-                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">Attendance</p>
+                <Activity className="w-8 h-8 text-emerald-300 mb-3" />
+                <p className="text-2xl font-bold">100%</p>
+                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">System Uptime</p>
             </div>
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl -mt-6">
-                <MessageSquare className="w-8 h-8 text-emerald-300 mb-3" />
-                <p className="text-2xl font-bold">04</p>
-                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">Messages</p>
+                <Bell className="w-8 h-8 text-amber-300 mb-3" />
+                <p className="text-2xl font-bold">02</p>
+                <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">Notifications</p>
             </div>
             <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
-                <FileText className="w-8 h-8 text-rose-300 mb-3" />
+                <Wrench className="w-8 h-8 text-rose-300 mb-3" />
                 <p className="text-2xl font-bold">{myTicketsCount}</p>
                 <p className="text-xs text-blue-200/60 uppercase font-bold tracking-tighter">My Tickets</p>
             </div>
@@ -91,20 +91,20 @@ const UserHome = ({ user, tickets }) => {
         <div onClick={() => navigate('/resources')} className="bg-[#125B65] p-1 rounded-[2.5rem] shadow-lg group cursor-pointer overflow-hidden border border-white/10">
           <div className="bg-white rounded-[2.3rem] p-8 h-full transition-transform group-hover:scale-[0.98]">
             <LayoutGrid className="w-10 h-10 text-[#125B65] mb-4" />
-            <h3 className="text-xl font-black text-gray-900">Module Portal</h3>
-            <p className="text-gray-500 text-sm mt-2 mb-6">Manage your course modules, handouts, and submissions.</p>
+            <h3 className="text-xl font-black text-gray-900">Facilities & Assets</h3>
+            <p className="text-gray-500 text-sm mt-2 mb-6">Explore the catalogue of labs, lecture halls, and premium campus equipment.</p>
             <button className="flex items-center gap-2 text-[#125B65] font-bold text-sm">
-              Enter Portal <ChevronRight className="w-4 h-4" />
+              Explore Resources <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div className="bg-[#E6F4F1] p-1 rounded-[2.5rem] shadow-lg group cursor-pointer overflow-hidden border border-white/10">
+        <div onClick={() => navigate('/bookings')} className="bg-[#F8A435] p-1 rounded-[2.5rem] shadow-lg group cursor-pointer overflow-hidden border border-white/10">
           <div className="bg-white rounded-[2.3rem] p-8 h-full transition-transform group-hover:scale-[0.98]">
-            <Zap className="w-10 h-10 text-amber-500 mb-4" />
-            <h3 className="text-xl font-black text-gray-900">Campus Events</h3>
-            <p className="text-gray-500 text-sm mt-2 mb-6">Stay updated with the latest workshops and student activities.</p>
-            <button className="flex items-center gap-2 text-amber-600 font-bold text-sm">
-              View Schedule <ChevronRight className="w-4 h-4" />
+            <Calendar className="w-10 h-10 text-[#F8A435] mb-4" />
+            <h3 className="text-xl font-black text-gray-900">Smart Bookings</h3>
+            <p className="text-gray-500 text-sm mt-2 mb-6">Reserve spaces for projects or group studies without scheduling conflicts.</p>
+            <button className="flex items-center gap-2 text-[#F8A435] font-bold text-sm">
+              Manage Bookings <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -112,7 +112,7 @@ const UserHome = ({ user, tickets }) => {
           <div className="bg-white rounded-[2.3rem] p-8 h-full transition-transform group-hover:scale-[0.98]">
             <Wrench className="w-10 h-10 text-gray-700 mb-4" />
             <h3 className="text-xl font-black text-gray-900">Support Hub</h3>
-            <p className="text-gray-500 text-sm mt-2 mb-6">Technical issues or maintenance requests? We are here to help.</p>
+            <p className="text-gray-500 text-sm mt-2 mb-6">Report technical incidents or facility damages for rapid technician resolution.</p>
             <button className="flex items-center gap-2 text-[#061224] font-bold text-sm">
               Report Incident <ChevronRight className="w-4 h-4" />
             </button>
