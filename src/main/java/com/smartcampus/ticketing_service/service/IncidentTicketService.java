@@ -13,6 +13,7 @@ import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
+import com.smartcampus.ticketing_service.dto.TicketFeedbackRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,10 +25,12 @@ public class IncidentTicketService {
 
     private final IncidentTicketRepository ticketRepository;
     private final FileStorageService fileStorageService;
+    private final EmailService emailService;
 
-    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService) {
+    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService, EmailService emailService) {
         this.ticketRepository = ticketRepository;
         this.fileStorageService = fileStorageService;
+        this.emailService = emailService;
     }
 
     public TicketResponse createTicket(TicketCreateRequest request, List<MultipartFile> files) {
@@ -42,6 +45,7 @@ public class IncidentTicketService {
         ticket.setPriority(request.getPriority());
         ticket.setPreferredContactDetails(request.getPreferredContactDetails());
         ticket.setCreatedByUserId(request.getCreatedByUserId());
+        ticket.setCreatedByEmail(request.getCreatedByEmail());
         ticket.setStatus(TicketStatus.OPEN);
 
         // Save first to get ID for file prefix
@@ -58,6 +62,28 @@ public class IncidentTicketService {
             }
             ticket.setAttachmentUrls(imageUrls);
             ticket = ticketRepository.save(ticket);
+        }
+
+        try {
+            String recipient = ticket.getCreatedByEmail();
+            
+            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                String contact = ticket.getPreferredContactDetails();
+                if (contact != null && contact.contains("@")) {
+                    recipient = contact;
+                }
+            }
+
+            System.out.println("DEBUG: Final Recipient for Notification: [" + recipient + "]");
+            
+            if (recipient != null && !recipient.trim().isEmpty() && recipient.contains("@")) {
+                emailService.sendTicketCreatedEmail(recipient, ticket.getId(), ticket.getCategory());
+            } else {
+                System.out.println("No valid email provided for ticket " + ticket.getId() + " (Value: " + recipient + ")");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send email: " + e.getMessage());
         }
 
         return mapToResponse(ticket);
@@ -96,6 +122,25 @@ public class IncidentTicketService {
             ticket.setRejectionReason(updateRequest.getRejectionReason());
         }
         ticket = ticketRepository.save(ticket);
+
+        try {
+            String recipient = ticket.getCreatedByEmail();
+            
+            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                String contact = ticket.getPreferredContactDetails();
+                if (contact != null && contact.contains("@")) {
+                    recipient = contact;
+                }
+            }
+            
+            if (recipient != null && recipient.contains("@")) {
+                emailService.sendTicketStatusUpdatedEmail(recipient, ticket.getId(), ticket.getCategory(), ticket.getStatus().name());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send email: " + e.getMessage());
+        }
+
         return mapToResponse(ticket);
     }
 
@@ -141,6 +186,21 @@ public class IncidentTicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
 
         ticket.setAssignedTechnicianId(request.getTechnicianId());
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public TicketResponse submitFeedback(String id, TicketFeedbackRequest request) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+
+        if (ticket.getStatus() != TicketStatus.RESOLVED && ticket.getStatus() != TicketStatus.CLOSED) {
+            throw new IllegalStateException("Feedback can only be submitted for RESOLVED or CLOSED tickets.");
+        }
+
+        ticket.setRating(request.getRating());
+        ticket.setFeedbackComment(request.getFeedbackComment());
+        
         ticket = ticketRepository.save(ticket);
         return mapToResponse(ticket);
     }
@@ -220,6 +280,9 @@ public class IncidentTicketService {
         response.setStatus(ticket.getStatus());
         response.setAttachmentUrls(ticket.getAttachmentUrls());
         response.setCreatedByUserId(ticket.getCreatedByUserId());
+        response.setCreatedByEmail(ticket.getCreatedByEmail());
+        response.setRating(ticket.getRating());
+        response.setFeedbackComment(ticket.getFeedbackComment());
         response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
