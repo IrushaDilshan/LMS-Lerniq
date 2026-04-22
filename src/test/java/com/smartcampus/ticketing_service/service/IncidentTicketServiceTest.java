@@ -11,7 +11,6 @@ import com.smartcampus.ticketing_service.model.TicketComment;
 import com.smartcampus.ticketing_service.model.TicketPriority;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.repository.IncidentTicketRepository;
-import com.smartcampus.ticketing_service.repository.TicketCommentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,9 +38,6 @@ class IncidentTicketServiceTest {
     @Mock
     private FileStorageService fileStorageService;
 
-    @Mock
-    private TicketCommentRepository ticketCommentRepository;
-
     @InjectMocks
     private IncidentTicketService ticketService;
 
@@ -50,7 +46,7 @@ class IncidentTicketServiceTest {
     @BeforeEach
     void setUp() {
         mockTicket = new IncidentTicket();
-        mockTicket.setId(1L);
+        mockTicket.setId("1");
         mockTicket.setResourceLocation("Room 101");
         mockTicket.setCategory("HARDWARE");
         mockTicket.setDescription("Projector not working");
@@ -62,7 +58,6 @@ class IncidentTicketServiceTest {
 
     @Test
     void createTicket_HappyPath() {
-        // Arrange
         TicketCreateRequest request = new TicketCreateRequest();
         request.setResourceLocation("Room 101");
         request.setCategory("HARDWARE");
@@ -76,10 +71,8 @@ class IncidentTicketServiceTest {
         when(ticketRepository.save(any(IncidentTicket.class))).thenReturn(mockTicket);
         when(fileStorageService.storeFile(any(), anyString())).thenReturn("test.png");
 
-        // Act
         TicketResponse response = ticketService.createTicket(request, files);
 
-        // Assert
         assertNotNull(response);
         assertEquals("Room 101", response.getResourceLocation());
         assertEquals(TicketStatus.OPEN, response.getStatus());
@@ -92,7 +85,6 @@ class IncidentTicketServiceTest {
 
     @Test
     void createTicket_Over3Files_ThrowsException() {
-        // Arrange
         TicketCreateRequest request = new TicketCreateRequest();
         List<MultipartFile> files = new ArrayList<>();
         files.add(new MockMultipartFile("file1", "test1.png", "image/png", new byte[0]));
@@ -100,7 +92,6 @@ class IncidentTicketServiceTest {
         files.add(new MockMultipartFile("file3", "test3.png", "image/png", new byte[0]));
         files.add(new MockMultipartFile("file4", "test4.png", "image/png", new byte[0]));
 
-        // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             ticketService.createTicket(request, files);
         });
@@ -111,82 +102,62 @@ class IncidentTicketServiceTest {
 
     @Test
     void getTicketById_Found() {
-        // Arrange
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.findById("1")).thenReturn(Optional.of(mockTicket));
 
-        // Act
-        TicketResponse response = ticketService.getTicketById(1L);
+        TicketResponse response = ticketService.getTicketById("1");
 
-        // Assert
         assertNotNull(response);
-        assertEquals(1L, response.getId());
+        assertEquals("1", response.getId());
         assertEquals("Room 101", response.getResourceLocation());
-        verify(ticketRepository, times(1)).findById(1L);
+        verify(ticketRepository, times(1)).findById("1");
     }
 
     @Test
     void getTicketById_NotFound_ThrowsException() {
-        // Arrange
-        when(ticketRepository.findById(99L)).thenReturn(Optional.empty());
+        when(ticketRepository.findById("99")).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
-            ticketService.getTicketById(99L);
+            ticketService.getTicketById("99");
         });
-        verify(ticketRepository, times(1)).findById(99L);
+        verify(ticketRepository, times(1)).findById("99");
     }
 
     @Test
     void updateTicketStatus_StatusChange() {
-        // Arrange
         TicketStatusUpdateRequest request = new TicketStatusUpdateRequest();
         request.setStatus(TicketStatus.RESOLVED);
         request.setResolutionNote("Fixed the cable");
 
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.findById("1")).thenReturn(Optional.of(mockTicket));
         when(ticketRepository.save(any(IncidentTicket.class))).thenReturn(mockTicket);
 
-        // Act
-        TicketResponse response = ticketService.updateTicketStatus(1L, request);
+        TicketResponse response = ticketService.updateTicketStatus("1", request);
 
-        // Assert
         assertNotNull(response);
         assertEquals(TicketStatus.RESOLVED, mockTicket.getStatus());
         assertEquals("Fixed the cable", mockTicket.getResolutionNote());
         assertEquals(TicketStatus.RESOLVED, response.getStatus());
         assertEquals("Fixed the cable", response.getResolutionNote());
         
-        verify(ticketRepository, times(1)).findById(1L);
+        verify(ticketRepository, times(1)).findById("1");
         verify(ticketRepository, times(1)).save(mockTicket);
     }
 
     @Test
     void addComment_HappyPath() {
-        // Arrange
         CommentCreateRequest request = new CommentCreateRequest();
         request.setContent("This is a test comment");
         request.setCreatedByUserId(2L);
 
-        TicketComment savedComment = new TicketComment();
-        savedComment.setId(100L);
-        savedComment.setTicket(mockTicket);
-        savedComment.setContent("This is a test comment");
-        savedComment.setCreatedByUserId(2L);
-        savedComment.setCreatedAt(LocalDateTime.now());
+        when(ticketRepository.findById("1")).thenReturn(Optional.of(mockTicket));
 
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(mockTicket));
-        when(ticketCommentRepository.save(any(TicketComment.class))).thenReturn(savedComment);
+        CommentResponse response = ticketService.addComment("1", request);
 
-        // Act
-        CommentResponse response = ticketService.addComment(1L, request);
-
-        // Assert
         assertNotNull(response);
-        assertEquals(100L, response.getId());
         assertEquals("This is a test comment", response.getContent());
         assertEquals(2L, response.getCreatedByUserId());
         
-        verify(ticketRepository, times(1)).findById(1L);
-        verify(ticketCommentRepository, times(1)).save(any(TicketComment.class));
+        verify(ticketRepository, times(1)).findById("1");
+        verify(ticketRepository, times(1)).save(mockTicket);
     }
 }

@@ -4,6 +4,7 @@ import com.smartcampus.ticketing_service.dto.AssignTechnicianRequest;
 import com.smartcampus.ticketing_service.dto.TicketCreateRequest;
 import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
+import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.model.TicketStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/v1/tickets")
 public class IncidentTicketController {
 
@@ -48,21 +50,38 @@ public class IncidentTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long id) {
+    public ResponseEntity<TicketResponse> getTicketById(@PathVariable String id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<TicketResponse> updateTicketStatus(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody TicketStatusUpdateRequest request) {
         TicketResponse updated = ticketService.updateTicketStatus(id, request);
         return ResponseEntity.ok(updated);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponse> updateTicket(
+            @PathVariable String id,
+            @RequestParam Long requestingUserId,
+            @Valid @RequestBody TicketUpdateRequest request) {
+        TicketResponse updated = ticketService.updateTicket(id, request, requestingUserId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTicket(
+            @PathVariable String id,
+            @RequestParam Long requestingUserId) {
+        ticketService.deleteTicket(id, requestingUserId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/assign")
     public ResponseEntity<?> assignTechnician(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody AssignTechnicianRequest request) {
         try {
             TicketResponse updated = ticketService.assignTechnician(id, request);
@@ -73,14 +92,14 @@ public class IncidentTicketController {
     }
 
     @GetMapping("/{id}/comments")
-    public ResponseEntity<List<CommentResponse>> getTicketComments(@PathVariable Long id) {
+    public ResponseEntity<List<CommentResponse>> getTicketComments(@PathVariable String id) {
         List<CommentResponse> comments = ticketService.getComments(id);
         return ResponseEntity.ok(comments);
     }
 
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody CommentCreateRequest request) {
         try {
             CommentResponse comment = ticketService.addComment(id, request);
@@ -92,8 +111,8 @@ public class IncidentTicketController {
 
     @DeleteMapping("/{ticketId}/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
-            @PathVariable Long ticketId,
-            @PathVariable Long commentId,
+            @PathVariable String ticketId,
+            @PathVariable String commentId,
             @RequestParam Long requestingUserId) {
         ticketService.deleteComment(ticketId, commentId, requestingUserId);
         return ResponseEntity.noContent().build(); // 204

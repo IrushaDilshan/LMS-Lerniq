@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Tag, Calendar, AlertCircle, Clock, CheckCircle, Image as ImageIcon, UserCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Tag, Calendar, AlertCircle, Clock, CheckCircle, Image as ImageIcon, UserCheck, Edit3, Trash2 } from 'lucide-react';
 import api from '../../api/axios';
+import { useNavigate } from 'react-router-dom';
 import TicketStatusUpdater from './TicketStatusUpdater';
 import CommentSection from './CommentSection';
 import TechnicianAssigner from './TechnicianAssigner';
+import TicketEditModal from './TicketEditModal';
 import { useAuth } from '../../context/AuthContext';
 
 const TicketDetailView = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [ticket, setTicket] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fallback dev base URL for images since they may be served from backend static folder
-  const IMAGE_BASE_URL = 'http://localhost:8088'; 
+  const IMAGE_BASE_URL = 'http://localhost:8089'; 
 
   useEffect(() => {
     fetchTicketDetail();
@@ -35,6 +40,25 @@ const TicketDetailView = () => {
 
   const handleStatusUpdate = (updatedTicket) => {
     setTicket(updatedTicket);
+  };
+
+  const handleUpdate = (updatedTicket) => {
+    setTicket(updatedTicket);
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete this ticket? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await api.delete(`/tickets/${id}?requestingUserId=${currentUser.id}`);
+      navigate('/tickets', { state: { message: 'Ticket deleted successfully.' } });
+    } catch (err) {
+      alert('Failed to delete ticket.');
+      setIsDeleting(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -89,8 +113,36 @@ const TicketDetailView = () => {
         </Link>
         <h1 className="text-2xl font-extrabold text-[#061224]">Ticket #{ticket.id}</h1>
         <div className="flex-1"></div>
-        {getStatusBadge(ticket.status)}
+        <div className="flex items-center gap-2">
+          {/* ONLY the author (Student User) can edit or delete their own tickets while they are still OPEN */}
+          {currentUser.id === ticket.createdByUserId && ticket.status === 'OPEN' && (
+            <>
+              <button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+              >
+                <Edit3 className="w-4 h-4 text-blue-500" /> Edit
+              </button>
+              <button 
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" /> {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </>
+          )}
+          {getStatusBadge(ticket.status)}
+        </div>
       </div>
+
+      {/* Edit Modal */}
+      <TicketEditModal 
+        ticket={ticket} 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        onUpdateSuccess={handleUpdate} 
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
