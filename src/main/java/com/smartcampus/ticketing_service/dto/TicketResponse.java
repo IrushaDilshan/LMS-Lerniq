@@ -21,6 +21,9 @@ public class TicketResponse {
     private Long assignedTechnicianId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String createdByEmail;
+    private Integer rating;
+    private String feedbackComment;
 
     public String getRejectionReason() {
         return this.rejectionReason;
@@ -132,6 +135,30 @@ public class TicketResponse {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getFeedbackComment() {
+        return feedbackComment;
+    }
+
+    public void setFeedbackComment(String feedbackComment) {
+        this.feedbackComment = feedbackComment;
     }
 
 }
