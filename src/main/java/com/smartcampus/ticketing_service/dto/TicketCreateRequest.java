@@ -24,6 +24,8 @@ public class TicketCreateRequest {
     @NotNull(message = "User ID is required")
     private Long createdByUserId;
 
+    private String createdByEmail;
+
     public String getResourceLocation() {
         return this.resourceLocation;
     }
@@ -70,6 +72,14 @@ public class TicketCreateRequest {
     
     public void setCreatedByUserId(Long createdByUserId) {
         this.createdByUserId = createdByUserId;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
     }
 
 }

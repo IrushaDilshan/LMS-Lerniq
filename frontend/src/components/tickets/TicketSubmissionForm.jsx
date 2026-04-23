@@ -10,6 +10,7 @@ const TicketSubmissionForm = () => {
     description: '',
     priority: 'LOW',
     preferredContactDetails: '',
+    createdByEmail: '',
   });
   
   const [files, setFiles] = useState([]);
@@ -55,6 +56,7 @@ const TicketSubmissionForm = () => {
         description: formData.description,
         priority: formData.priority,
         preferredContactDetails: formData.preferredContactDetails || 'N/A',
+        createdByEmail: formData.createdByEmail,
         createdByUserId: 1 // Stubbed User ID for now
       })], { type: 'application/json' });
       
@@ -80,6 +82,7 @@ const TicketSubmissionForm = () => {
           description: '',
           priority: 'LOW',
           preferredContactDetails: '',
+          createdByEmail: '',
         });
         setFiles([]);
         
@@ -174,6 +177,20 @@ const TicketSubmissionForm = () => {
             </select>
           </div>
           
+          {/* Email Address */}
+          <div className="space-y-2 md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-700">Email Address</label>
+            <input
+              type="email"
+              name="createdByEmail"
+              value={formData.createdByEmail}
+              onChange={handleInputChange}
+              placeholder="Enter your email to receive updates"
+              required
+              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+            />
+          </div>
+
           {/* Resource Location */}
           <div className="space-y-2 md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700">Resource or Location</label>

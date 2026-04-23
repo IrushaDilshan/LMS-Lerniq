@@ -43,6 +43,16 @@ const SettingItem = ({ icon: Icon, label, description, color, actionLabel, toggl
 
 const SettingsPage = () => {
   const { currentUser } = useAuth();
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => {
+    const saved = localStorage.getItem('uniops_notifications_enabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const toggleNotifications = () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabled(newValue);
+    localStorage.setItem('uniops_notifications_enabled', JSON.stringify(newValue));
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in pb-20">
@@ -126,12 +136,15 @@ const SettingsPage = () => {
           </SettingsSection>
 
           <SettingsSection title="System Preferences">
-            <SettingItem 
-              icon={Bell} 
-              label="Notifications" 
-              description="Global alert and push message rules"
-              color="bg-rose-50 text-rose-600"
-            />
+            <div onClick={toggleNotifications} className="w-full">
+              <SettingItem 
+                icon={Bell} 
+                label="Notifications" 
+                description="Global email alerts for ticket updates"
+                color="bg-rose-50 text-rose-600"
+                toggle={notificationsEnabled}
+              />
+            </div>
             <SettingItem 
               icon={Moon} 
               label="Dark Appearance" 
