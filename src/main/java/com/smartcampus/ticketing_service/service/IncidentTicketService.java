@@ -6,6 +6,7 @@ import com.smartcampus.ticketing_service.dto.TicketResponse;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
 import com.smartcampus.ticketing_service.exception.UnauthorizedException;
 import com.smartcampus.ticketing_service.model.IncidentTicket;
+import com.smartcampus.ticketing_service.model.NotificationType;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.model.TicketComment;
 import com.smartcampus.ticketing_service.repository.IncidentTicketRepository;
@@ -24,10 +25,15 @@ public class IncidentTicketService {
 
     private final IncidentTicketRepository ticketRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
-    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService) {
+    public IncidentTicketService(
+            IncidentTicketRepository ticketRepository,
+            FileStorageService fileStorageService,
+            NotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     public TicketResponse createTicket(TicketCreateRequest request, List<MultipartFile> files) {
@@ -96,6 +102,12 @@ public class IncidentTicketService {
             ticket.setRejectionReason(updateRequest.getRejectionReason());
         }
         ticket = ticketRepository.save(ticket);
+        notificationService.createNotification(
+                ticket.getCreatedByUserId(),
+                NotificationType.TICKET_STATUS_CHANGED,
+                "Ticket Status Updated",
+                "Your ticket " + ticket.getId() + " moved to " + ticket.getStatus() + ".",
+                ticket.getId());
         return mapToResponse(ticket);
     }
 
@@ -142,6 +154,12 @@ public class IncidentTicketService {
 
         ticket.setAssignedTechnicianId(request.getTechnicianId());
         ticket = ticketRepository.save(ticket);
+        notificationService.createNotification(
+                request.getTechnicianId(),
+                NotificationType.TICKET_ASSIGNED,
+                "New Ticket Assigned",
+                "Ticket " + ticket.getId() + " was assigned to you.",
+                ticket.getId());
         return mapToResponse(ticket);
     }
 
@@ -163,6 +181,14 @@ public class IncidentTicketService {
         
         ticket.getComments().add(comment);
         ticketRepository.save(ticket);
+        if (!request.getCreatedByUserId().equals(ticket.getCreatedByUserId())) {
+            notificationService.createNotification(
+                    ticket.getCreatedByUserId(),
+                    NotificationType.TICKET_COMMENT_ADDED,
+                    "New Comment Added",
+                    "A new comment was added to ticket " + ticket.getId() + ".",
+                    ticket.getId());
+        }
         
         return mapToCommentResponse(comment);
     }

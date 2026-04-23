@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import OAuthLoginButton from '../auth/OAuthLoginButton';
 
 const LandingPage = () => {
   const { mockLoginAs } = useAuth();
@@ -97,6 +98,9 @@ const LandingPage = () => {
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">Global Active nodes</p>
               </div>
             </div>
+          </div>
+          <div className="mt-8 flex justify-center">
+            <OAuthLoginButton />
           </div>
         </div>
       </section>
