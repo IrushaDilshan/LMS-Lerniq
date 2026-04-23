@@ -7,6 +7,7 @@ import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
 import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
+import com.smartcampus.ticketing_service.dto.TicketFeedbackRequest;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.service.IncidentTicketService;
 import jakarta.validation.Valid;
@@ -87,6 +88,20 @@ public class IncidentTicketController {
             TicketResponse updated = ticketService.assignTechnician(id, request);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/{id}/feedback")
+    public ResponseEntity<?> submitFeedback(
+            @PathVariable String id,
+            @Valid @RequestBody TicketFeedbackRequest request) {
+        try {
+            System.out.println("DEBUG: Receiving feedback for ticket: " + id + " | Rating: " + request.getRating());
+            TicketResponse updated = ticketService.submitFeedback(id, request);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            System.err.println("DEBUG: Feedback submission failed: " + e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

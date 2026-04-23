@@ -7,7 +7,9 @@ import TicketStatusUpdater from './TicketStatusUpdater';
 import CommentSection from './CommentSection';
 import TechnicianAssigner from './TechnicianAssigner';
 import TicketEditModal from './TicketEditModal';
+import FeedbackModal from './FeedbackModal';
 import { useAuth } from '../../context/AuthContext';
+import { Star } from 'lucide-react';
 
 const TicketDetailView = () => {
   const { id } = useParams();
@@ -17,6 +19,7 @@ const TicketDetailView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Fallback dev base URL for images since they may be served from backend static folder
@@ -132,6 +135,17 @@ const TicketDetailView = () => {
               </button>
             </>
           )}
+          {/* Feedback Button for Authors when Resolved */}
+          {currentUser.id === ticket.createdByUserId && 
+           (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') && 
+           !ticket.rating && (
+            <button 
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-2 bg-amber-500 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-amber-600 transition-all active:scale-95 shadow-lg shadow-amber-500/20"
+            >
+              <Star className="w-4 h-4 fill-white" /> Give Feedback
+            </button>
+          )}
           {getStatusBadge(ticket.status)}
         </div>
       </div>
@@ -142,6 +156,13 @@ const TicketDetailView = () => {
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         onUpdateSuccess={handleUpdate} 
+      />
+
+      <FeedbackModal
+        ticket={ticket}
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        onSuccess={fetchTicketDetail}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -204,6 +225,28 @@ const TicketDetailView = () => {
                   <AlertCircle className="w-4 h-4 mr-1.5" /> Rejection Reason
                 </h3>
                 <p className="text-rose-700 font-medium">{ticket.rejectionReason}</p>
+              </div>
+            )}
+
+            {/* User Feedback Display */}
+            {(ticket.rating > 0) && (
+              <div className="p-6 bg-slate-50 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3 flex items-center">
+                  <Star className="w-4 h-4 mr-1.5 text-amber-400 fill-amber-400" /> User Satisfaction
+                </h3>
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={`w-5 h-5 ${ticket.rating >= star ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-gray-500 ml-2">
+                    {ticket.rating}/5 Rating
+                  </span>
+                </div>
+                {ticket.feedbackComment && (
+                  <p className="text-gray-600 text-sm italic">"{ticket.feedbackComment}"</p>
+                )}
               </div>
             )}
           </div>

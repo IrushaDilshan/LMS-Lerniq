@@ -26,6 +26,9 @@ public class IncidentTicket {
     private Long assignedTechnicianId;
     private String resolutionNote;
     private String rejectionReason;
+    private String createdByEmail;
+    private Integer rating;
+    private String feedbackComment;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -153,6 +156,30 @@ public class IncidentTicket {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getFeedbackComment() {
+        return feedbackComment;
+    }
+
+    public void setFeedbackComment(String feedbackComment) {
+        this.feedbackComment = feedbackComment;
     }
 
 }
