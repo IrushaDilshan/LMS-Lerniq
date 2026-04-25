@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, ChevronRight, Filter } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, ChevronRight, Filter, Star } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -221,6 +221,7 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                   <th className="pb-3 px-4">Category</th>
                   <th className="pb-3 px-4">Priority</th>
                   <th className="pb-3 px-4">Status</th>
+                  <th className="pb-3 px-4">Rating</th>
                   <th className="pb-3 pl-4 text-right">Date</th>
                   <th className="pb-3 pl-2"></th>
                 </tr>
@@ -253,6 +254,16 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                     <td className="py-5 px-4 text-sm text-gray-600 whitespace-nowrap font-medium">{ticket.category}</td>
                     <td className="py-5 px-4"><PriorityBadge priority={ticket.priority} /></td>
                     <td className="py-5 px-4"><StatusBadge ticket={ticket} /></td>
+                    <td className="py-5 px-4">
+                       {ticket.rating ? (
+                         <div className="flex items-center gap-1">
+                           <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                           <span className="text-sm font-black text-gray-700">{ticket.rating}</span>
+                         </div>
+                       ) : (
+                         <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">—</span>
+                       )}
+                     </td>
                     <td className="py-5 pl-4 text-right whitespace-nowrap pr-2">
                       <div className="text-xs text-gray-800 font-bold">
                         {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}

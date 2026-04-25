@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   PenTool, CheckCircle, Clock, List, AlertCircle, 
-  MapPin, User, ChevronRight, Zap, Target
+  MapPin, User, ChevronRight, Zap, Target, Star
 } from 'lucide-react';
 import TicketList from '../tickets/TicketList';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +36,11 @@ const TechnicianDashboard = () => {
     const priorityMap = { 'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
     return priorityMap[a.priority] - priorityMap[b.priority];
   })[0];
+  
+  const ratedTickets = tickets.filter(t => t.rating && t.rating > 0);
+  const avgRating = ratedTickets.length > 0 
+    ? (ratedTickets.reduce((acc, t) => acc + t.rating, 0) / ratedTickets.length).toFixed(1)
+    : null;
 
   if (loading) {
     return (
@@ -67,6 +72,15 @@ const TechnicianDashboard = () => {
              <div className="w-16 h-16 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group hover:border-emerald-400/50 transition-colors">
                <CheckCircle className="w-8 h-8 text-emerald-300" />
              </div>
+             {avgRating && (
+               <div className="bg-amber-400/10 backdrop-blur-md rounded-2xl px-5 py-2 border border-amber-400/30 flex flex-col items-center justify-center">
+                  <div className="flex items-center gap-1.5 text-amber-400">
+                     <Star className="w-5 h-5 fill-amber-400" />
+                     <span className="text-2xl font-black">{avgRating}</span>
+                  </div>
+                  <p className="text-[9px] font-black uppercase tracking-tighter text-amber-200/60">Satisfaction</p>
+               </div>
+             )}
           </div>
         </div>
       </div>

@@ -140,6 +140,7 @@ function AppContent() {
               <Route path="/tickets/:id" element={<TicketDetailView />} />
               <Route path="/technician" element={currentUser.role === 'TECHNICIAN' ? <TechnicianDashboard /> : <div className="text-center py-20"><h1 className="text-2xl font-black text-gray-900">Access Denied</h1><p className="text-gray-500 mt-2">This portal is reserved for technicians.</p></div>} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </div>
