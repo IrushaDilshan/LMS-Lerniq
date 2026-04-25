@@ -5,6 +5,7 @@ import LandingPage from './components/pages/LandingPage';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
 import ResourcesPage from './components/pages/ResourcesPage';
+import BookingsPage from './components/pages/BookingsPage';
 import TicketDashboard from './components/pages/TicketDashboard';
 import TicketDetailView from './components/tickets/TicketDetailView';
 import TechnicianDashboard from './components/pages/TechnicianDashboard';
@@ -139,7 +140,7 @@ function AppContent() {
 
               <Route path="/" element={<HomePage />} />
               <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/bookings" element={<div className="flex flex-col items-center justify-center h-96 grayscale opacity-30"><Calendar className="w-20 h-20 mb-4" /><p className="font-black uppercase tracking-[4px] text-xs">Module B (Coming Soon)</p></div>} />
+              <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/tickets" element={<TicketDashboard />} />
               <Route path="/tickets/:id" element={<TicketDetailView />} />
               <Route path="/technician" element={currentUser.role === 'TECHNICIAN' ? <TechnicianDashboard /> : <div className="text-center py-20"><h1 className="text-2xl font-black text-gray-900">Access Denied</h1><p className="text-gray-500 mt-2">This portal is reserved for technicians.</p></div>} />
