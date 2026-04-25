@@ -44,6 +44,8 @@ public class IncidentTicketService {
         ticket.setDescription(request.getDescription());
         ticket.setPriority(request.getPriority());
         ticket.setPreferredContactDetails(request.getPreferredContactDetails());
+        ticket.setContactEmail(request.getContactEmail());
+        ticket.setContactPhone(request.getContactPhone());
         ticket.setCreatedByUserId(request.getCreatedByUserId());
         ticket.setCreatedByEmail(request.getCreatedByEmail());
         ticket.setStatus(TicketStatus.OPEN);
@@ -69,7 +71,10 @@ public class IncidentTicketService {
             
             // Smart Fallback: If Email field is empty, check Contact Details for an @ email
             if (recipient == null || recipient.trim().isEmpty()) {
-                String contact = ticket.getPreferredContactDetails();
+                String contact = ticket.getContactEmail();
+                if (contact == null || contact.trim().isEmpty()) {
+                    contact = ticket.getPreferredContactDetails();
+                }
                 if (contact != null && contact.contains("@")) {
                     recipient = contact;
                 }
@@ -128,7 +133,10 @@ public class IncidentTicketService {
             
             // Smart Fallback: If Email field is empty, check Contact Details for an @ email
             if (recipient == null || recipient.trim().isEmpty()) {
-                String contact = ticket.getPreferredContactDetails();
+                String contact = ticket.getContactEmail();
+                if (contact == null || contact.trim().isEmpty()) {
+                    contact = ticket.getPreferredContactDetails();
+                }
                 if (contact != null && contact.contains("@")) {
                     recipient = contact;
                 }
@@ -277,6 +285,8 @@ public class IncidentTicketService {
         response.setRejectionReason(ticket.getRejectionReason());
         response.setPriority(ticket.getPriority());
         response.setPreferredContactDetails(ticket.getPreferredContactDetails());
+        response.setContactEmail(ticket.getContactEmail());
+        response.setContactPhone(ticket.getContactPhone());
         response.setStatus(ticket.getStatus());
         response.setAttachmentUrls(ticket.getAttachmentUrls());
         response.setCreatedByUserId(ticket.getCreatedByUserId());

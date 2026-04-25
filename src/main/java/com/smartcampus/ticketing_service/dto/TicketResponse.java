@@ -15,6 +15,8 @@ public class TicketResponse {
     private String rejectionReason;
     private TicketPriority priority;
     private String preferredContactDetails;
+    private String contactEmail;
+    private String contactPhone;
     private TicketStatus status;
     private List<String> attachmentUrls;
     private Long createdByUserId;
@@ -87,6 +89,22 @@ public class TicketResponse {
     
     public void setPreferredContactDetails(String preferredContactDetails) {
         this.preferredContactDetails = preferredContactDetails;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
     }
 
     public TicketStatus getStatus() {

@@ -42,10 +42,11 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(htmlContent, true);
             helper.setFrom("votifysliit@gmail.com", "UniOps Support");
 
+            logger.info("Attempting to send email to: " + recipient + " for ticket: " + ticketId);
             mailSender.send(message);
-            logger.info("Email sent successfully to: " + recipient);
+            logger.info("SUCCESS: Email sent to: " + recipient);
         } catch (Exception e) {
-            logger.error("Failed to send HTML email to " + recipient + ": " + e.getMessage());
+            logger.error("CRITICAL: Failed to send HTML email to " + recipient + ". Error: " + e.getMessage(), e);
         }
     }
 
@@ -76,10 +77,11 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(htmlContent, true);
             helper.setFrom("votifysliit@gmail.com", "UniOps Support");
 
+            logger.info("Attempting to send status update email to: " + recipient + " for ticket: " + ticketId);
             mailSender.send(message);
-            logger.info("Status update email sent successfully to: " + recipient);
+            logger.info("SUCCESS: Status update email sent to: " + recipient);
         } catch (Exception e) {
-            logger.error("Failed to send status update email to " + recipient + ": " + e.getMessage());
+            logger.error("CRITICAL: Failed to send status update email to " + recipient + ". Error: " + e.getMessage(), e);
         }
     }
 
@@ -128,7 +130,7 @@ public class EmailServiceImpl implements EmailService {
                     </div>
                     
                     <p style="margin-top: 30px;">You can track the progress of your ticket in the UniOps Portal.</p>
-                    <a href="http://localhost:5173/dashboard" class="btn">View Dashboard</a>
+                    <a href="http://localhost:5173/tickets/%s" class="btn">View Ticket Details</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 UniOps Smart Campus Ticketing Service. All rights reserved.
@@ -136,6 +138,6 @@ public class EmailServiceImpl implements EmailService {
             </div>
         </body>
         </html>
-        """.formatted(header, message, id, title, statusClass, status);
+        """.formatted(header, message, id, title, statusClass, status, id);
     }
 }

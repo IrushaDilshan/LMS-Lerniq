@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, Plus, List, AlertTriangle, Clock, CheckCircle, TrendingUp, X } from 'lucide-react';
-import TicketSubmissionForm from '../tickets/TicketSubmissionForm';
 import TicketList from '../tickets/TicketList';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -142,12 +141,14 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
     category: '',
     description: '',
     priority: 'LOW',
-    preferredContactDetails: '',
+    contactEmail: '',
+    contactPhone: '',
   });
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -170,7 +171,23 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus(null);
-    setErrorMessage('');
+    const errors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!emailRegex.test(formData.contactEmail)) {
+      errors.contactEmail = 'Please enter a valid email address.';
+    }
+    if (!phoneRegex.test(formData.contactPhone)) {
+      errors.contactPhone = 'Phone number must be exactly 10 digits.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       const payload = new FormData();
@@ -179,7 +196,9 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         category: formData.category,
         description: formData.description,
         priority: formData.priority,
-        preferredContactDetails: formData.preferredContactDetails || 'N/A',
+        contactEmail: formData.contactEmail,
+        contactPhone: formData.contactPhone,
+        preferredContactDetails: formData.contactEmail + " / " + formData.contactPhone,
         createdByUserId: 1,
       })], { type: 'application/json' });
       payload.append('ticket', blob);
@@ -191,7 +210,8 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         setSubmitStatus('success');
         const newId = res.data.id;
         setTimeout(() => { if (onSuccess) onSuccess(newId); }, 1500);
-        setFormData({ resourceLocation: '', category: '', description: '', priority: 'LOW', preferredContactDetails: '' });
+        setFormData({ resourceLocation: '', category: '', description: '', priority: 'LOW', contactEmail: '', contactPhone: '' });
+        setFieldErrors({});
         setFiles([]);
       }
     } catch (err) {
@@ -286,12 +306,22 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
               className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
           </div>
 
-          {/* Contact Details */}
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Preferred Contact <span className="text-rose-400">*</span></label>
-            <input type="text" name="preferredContactDetails" value={formData.preferredContactDetails} onChange={handleInputChange}
-              placeholder="e.g. your_email@student.sliit.lk or phone number" required
-              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
+          {/* Contact Details - Email & Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Contact Email <span className="text-rose-400">*</span></label>
+              <input type="email" name="contactEmail" value={formData.contactEmail} onChange={handleInputChange}
+                placeholder="e.g. your_email@student.sliit.lk" required
+                className={`w-full bg-gray-50 border ${fieldErrors.contactEmail ? 'border-rose-400 focus:ring-rose-200' : 'border-gray-200 focus:ring-blue-500'} text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:border-transparent outline-none transition-all`} />
+              {fieldErrors.contactEmail && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.contactEmail}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Phone Number <span className="text-rose-400">*</span></label>
+              <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleInputChange}
+                placeholder="e.g. 07XXXXXXXX" required
+                className={`w-full bg-gray-50 border ${fieldErrors.contactPhone ? 'border-rose-400 focus:ring-rose-200' : 'border-gray-200 focus:ring-blue-500'} text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:border-transparent outline-none transition-all`} />
+              {fieldErrors.contactPhone && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.contactPhone}</p>}
+            </div>
           </div>
 
           {/* Description */}
