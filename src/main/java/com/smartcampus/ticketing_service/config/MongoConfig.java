@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
 @Configuration
 public class MongoConfig extends AbstractMongoClientConfiguration {
 
-    @Value("${spring.data.mongodb.uri:mongodb+srv://uniops_db_user:uniops@cluster0.znyobu6.mongodb.net/uniops_db?retryWrites=true&w=majority&appName=Cluster0}")
+    @Value("${spring.mongodb.uri:mongodb+srv://uniops_db_user:uniops@cluster0.znyobu6.mongodb.net/uniops_db?retryWrites=true&w=majority&appName=Cluster0}")
     private String mongoUri;
 
     @Override
