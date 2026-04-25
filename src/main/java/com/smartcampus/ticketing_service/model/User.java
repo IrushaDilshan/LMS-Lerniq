@@ -1,17 +1,25 @@
-package com.smartcampus.ticketing_service.dto;
+package com.smartcampus.ticketing_service.model;
 
-import com.smartcampus.ticketing_service.model.Role;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-public class UserResponse {
+@Document(collection = "users")
+public class User {
+    @Id
     private String id;
-    private Long externalUserId;
     private String name;
+
+    @Indexed(unique = true)
     private String email;
-    private Role role;
-    private String authProvider;
+
+    private String password;
+    private Role role = Role.USER;
+    private String authProvider = "LOCAL";
     private String avatarUrl;
+    private Long externalUserId;
     private LocalDateTime lastLoginAt;
 
     public String getId() {
@@ -20,14 +28,6 @@ public class UserResponse {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public Long getExternalUserId() {
-        return externalUserId;
-    }
-
-    public void setExternalUserId(Long externalUserId) {
-        this.externalUserId = externalUserId;
     }
 
     public String getName() {
@@ -44,6 +44,14 @@ public class UserResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Role getRole() {
@@ -68,6 +76,14 @@ public class UserResponse {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public Long getExternalUserId() {
+        return externalUserId;
+    }
+
+    public void setExternalUserId(Long externalUserId) {
+        this.externalUserId = externalUserId;
     }
 
     public LocalDateTime getLastLoginAt() {

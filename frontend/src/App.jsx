@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Home, BookOpen, Calendar, Wrench, Settings, Bell, MessageSquare, Menu, Briefcase, Shield, User } from 'lucide-react';
 import LandingPage from './components/pages/LandingPage';
+import LoginPage from './components/pages/LoginPage';
+import RegisterPage from './components/pages/RegisterPage';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
 import ResourcesPage from './components/pages/ResourcesPage';
@@ -185,7 +187,17 @@ function App() {
 
 function AuthWrapper() {
   const { currentUser } = useAuth();
-  return currentUser ? <AppContent /> : <LandingPage />;
+  if (currentUser) {
+    return <AppContent />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="*" element={<LandingPage />} />
+    </Routes>
+  );
 }
 
 export default App;

@@ -10,10 +10,10 @@ import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.service.IncidentTicketService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +31,7 @@ public class IncidentTicketController {
     }
 
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<?> createTicket(
             @Valid @RequestPart("ticket") TicketCreateRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
@@ -43,6 +44,7 @@ public class IncidentTicketController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<List<TicketResponse>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) Long userId) {
@@ -50,11 +52,13 @@ public class IncidentTicketController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<TicketResponse> getTicketById(@PathVariable String id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<TicketResponse> updateTicketStatus(
             @PathVariable String id,
             @RequestBody TicketStatusUpdateRequest request) {
@@ -63,6 +67,7 @@ public class IncidentTicketController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable String id,
             @RequestParam Long requestingUserId,
@@ -72,6 +77,7 @@ public class IncidentTicketController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<Void> deleteTicket(
             @PathVariable String id,
             @RequestParam Long requestingUserId) {
@@ -80,6 +86,7 @@ public class IncidentTicketController {
     }
 
     @PutMapping("/{id}/assign")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignTechnician(
             @PathVariable String id,
             @Valid @RequestBody AssignTechnicianRequest request) {
@@ -92,12 +99,14 @@ public class IncidentTicketController {
     }
 
     @GetMapping("/{id}/comments")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<List<CommentResponse>> getTicketComments(@PathVariable String id) {
         List<CommentResponse> comments = ticketService.getComments(id);
         return ResponseEntity.ok(comments);
     }
 
     @PostMapping("/{id}/comments")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<?> addComment(
             @PathVariable String id,
             @Valid @RequestBody CommentCreateRequest request) {
@@ -110,6 +119,7 @@ public class IncidentTicketController {
     }
 
     @DeleteMapping("/{ticketId}/comments/{commentId}")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','ADMIN')")
     public ResponseEntity<Void> deleteComment(
             @PathVariable String ticketId,
             @PathVariable String commentId,

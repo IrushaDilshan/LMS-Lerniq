@@ -5,7 +5,7 @@ import {
   Cpu, Lock, Globe2, Sparkles, MoveRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import OAuthLoginButton from '../auth/OAuthLoginButton';
 
 const LandingPage = () => {
@@ -98,6 +98,14 @@ const LandingPage = () => {
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">Global Active nodes</p>
               </div>
             </div>
+          </div>
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <Link to="/login" className="px-8 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-xs font-black uppercase tracking-widest border border-white/20 transition-all">
+              Login
+            </Link>
+            <Link to="/register" className="px-8 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-xs font-black uppercase tracking-widest transition-all">
+              Register
+            </Link>
           </div>
           <div className="mt-8 flex justify-center">
             <OAuthLoginButton />

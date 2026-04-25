@@ -1,17 +1,17 @@
 package com.smartcampus.ticketing_service.dto;
 
-import com.smartcampus.ticketing_service.model.UserRole;
+import com.smartcampus.ticketing_service.model.Role;
 import jakarta.validation.constraints.NotNull;
 
 public class UpdateUserRoleRequest {
     @NotNull(message = "Role is required")
-    private UserRole role;
+    private Role role;
 
-    public UserRole getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(UserRole role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 }
