@@ -11,6 +11,7 @@ import TicketDetailView from './components/tickets/TicketDetailView';
 import TechnicianDashboard from './components/pages/TechnicianDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LogOut } from 'lucide-react';
+import AdminResourcesPage from './components/pages/AdminResourcesPage';
 
 function AppContent() {
   const location = useLocation();
@@ -139,7 +140,7 @@ function AppContent() {
               <Route path="/user" element={<RoleRedirect role="USER" />} />
 
               <Route path="/" element={<HomePage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/resources" element={currentUser.role === 'ADMIN' ? <AdminResourcesPage /> : <ResourcesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/tickets" element={<TicketDashboard />} />
               <Route path="/tickets/:id" element={<TicketDetailView />} />
