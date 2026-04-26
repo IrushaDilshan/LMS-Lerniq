@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import com.smartcampus.ticketing_service.exception.GlobalExceptionHandler;
 
