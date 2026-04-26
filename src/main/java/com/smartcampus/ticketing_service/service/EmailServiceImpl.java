@@ -94,7 +94,7 @@ public class EmailServiceImpl implements EmailService {
         };
     }
 
-    private String getEmailTemplate(String header, String message, String title, String id, String status, String statusClass) {
+    private String getEmailTemplate(String heading, String description, String ticketTitle, String ticketId, String status, String colorClass) {
         return """
         <!DOCTYPE html>
         <html>
@@ -102,16 +102,13 @@ public class EmailServiceImpl implements EmailService {
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 20px auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-                .header { background-color: #061224; color: white; padding: 30px; text-align: center; }
+                .header { background: linear-gradient(135deg, #061224 0%, #0f1729 100%); color: white; padding: 30px; text-align: center; }
                 .content { padding: 40px; }
-                .ticket-card { background-color: #f9fafb; border-radius: 8px; padding: 20px; margin-top: 20px; border: 1px solid #f3f4f6; }
-                .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-                .bg-blue-100 { background-color: #dbeafe; color: #1d4ed8; }
-                .bg-amber-100 { background-color: #fef3c7; color: #b45309; }
-                .bg-emerald-100 { background-color: #d1fae5; color: #047857; }
-                .bg-rose-100 { background-color: #fee2e2; color: #b91c1c; }
+                .status-badge { display: inline-block; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; margin: 10px 0; }
+                .ticket-info { background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
+                .label { font-weight: 600; color: #374151; }
                 .footer { background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; }
-                .btn { display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
             </style>
         </head>
         <body>
@@ -120,24 +117,108 @@ public class EmailServiceImpl implements EmailService {
                     <h1 style="margin:0; font-size: 24px;">UniOps Smart Campus</h1>
                 </div>
                 <div class="content">
-                    <h2 style="color: #061224;">%s</h2>
-                    <p>%s</p>
+                    <h2 style="color: #061224; margin-top: 0;">%s</h2>
+                    <p style="color: #6b7280;">%s</p>
                     
-                    <div class="ticket-card">
-                        <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: bold; text-transform: uppercase;">Ticket #%s</p>
-                        <h3 style="margin: 5px 0 15px 0; color: #111827;">%s</h3>
-                        <div class="badge %s">%s</div>
+                    <div class="status-badge %s">%s</div>
+                    
+                    <div class="ticket-info">
+                        <div class="info-row">
+                            <span class="label">Ticket:</span>
+                            <span>%s</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">ID:</span>
+                            <span>#%s</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span>%s</span>
+                        </div>
                     </div>
                     
-                    <p style="margin-top: 30px;">You can track the progress of your ticket in the UniOps Portal.</p>
-                    <a href="http://localhost:5173/tickets/%s" class="btn">View Ticket Details</a>
+                    <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">
+                        You can track the progress of your ticket in the UniOps portal.
+                    </p>
                 </div>
                 <div class="footer">
-                    &copy; 2026 UniOps Smart Campus Ticketing Service. All rights reserved.
+                    &copy; 2026 UniOps Smart Campus. All rights reserved.
                 </div>
             </div>
         </body>
         </html>
-        """.formatted(header, message, id, title, statusClass, status, id);
+        """.formatted(heading, description, colorClass, status, ticketTitle, ticketId, status);
+    }
+
+    @Async
+    public void sendOtpEmail(String to, String otp) {
+        String recipient = (to != null && to.contains("@")) ? to : "default-user@example.com";
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+            String htmlContent = getOtpEmailTemplate(otp);
+
+            helper.setTo(recipient);
+            helper.setSubject("UniOps Student Email Verification OTP");
+            helper.setText(htmlContent, true);
+            helper.setFrom("votifysliit@gmail.com", "UniOps Support");
+
+            logger.info("Attempting to send OTP email to: " + recipient);
+            mailSender.send(message);
+            logger.info("SUCCESS: OTP email sent to: " + recipient);
+        } catch (Exception e) {
+            logger.error("CRITICAL: Failed to send OTP email to " + recipient + ". Error: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to send OTP email: " + e.getMessage());
+        }
+    }
+
+    private String getOtpEmailTemplate(String otp) {
+        String template = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 20px auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+                .header { background: linear-gradient(135deg, #061224 0, #0f1729 100); color: white; padding: 30px; text-align: center; }
+                .content { padding: 40px; }
+                .otp-box { background-color: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                .otp-code { font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1d4ed8; font-family: 'Courier New', monospace; }
+                .expiry-notice { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+                .footer { background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1 style="margin:0; font-size: 24px;">UniOps Smart Campus</h1>
+                </div>
+                <div class="content">
+                    <h2 style="color: #061224;">Email Verification Required</h2>
+                    <p>Welcome to UniOps! To complete your student registration, please use the verification code below.</p>
+                    
+                    <div class="otp-box">
+                        <p style="margin: 0 0 10px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Your Verification Code</p>
+                        <div class="otp-code">REPLACE_OTP</div>
+                    </div>
+                    
+                    <div class="expiry-notice">
+                        <strong>⏰ This code expires in 5 minutes</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 14px;">If you did not request this code, please ignore this email.</p>
+                    </div>
+                    
+                    <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">
+                        <strong>Important:</strong> Never share this code with anyone. UniOps staff will never ask for your verification code.
+                    </p>
+                </div>
+                <div class="footer">
+                    &copy; 2026 UniOps Smart Campus. All rights reserved.
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+        return template.replace("REPLACE_OTP", otp);
     }
 }

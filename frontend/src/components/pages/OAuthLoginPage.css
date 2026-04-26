@@ -1,0 +1,28 @@
+.oauth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-btn {
+  background: #111827;
+}
+
+.admin-btn:hover {
+  background: #020617;
+}
+
+.tech-btn {
+  background: #059669;
+}
+
+.tech-btn:hover {
+  background: #047857;
+}
+
+.oauth-card hr {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 8px 0;
+}

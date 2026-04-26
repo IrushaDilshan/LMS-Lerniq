@@ -20,7 +20,7 @@ const LandingPage = () => {
   }, []);
 
   const handleStart = (role) => {
-    mockLoginAs(role);
+    navigate(`/auth?role=${role}`);
   };
 
   return (

@@ -1,0 +1,50 @@
+.role-page-container {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.role-page-container h2 {
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.role-subtitle {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.role-message {
+  background: #ecfdf5;
+  color: #047857;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.role-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.role-table th,
+.role-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.role-table th {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.role-table select {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
