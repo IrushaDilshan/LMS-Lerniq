@@ -24,8 +24,26 @@ public class TicketResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdByEmail;
+    private String createdByUserName;
+    private String assignedTechnicianName;
     private Integer rating;
     private String feedbackComment;
+
+    public String getCreatedByUserName() {
+        return createdByUserName;
+    }
+
+    public void setCreatedByUserName(String createdByUserName) {
+        this.createdByUserName = createdByUserName;
+    }
+
+    public String getAssignedTechnicianName() {
+        return assignedTechnicianName;
+    }
+
+    public void setAssignedTechnicianName(String assignedTechnicianName) {
+        this.assignedTechnicianName = assignedTechnicianName;
+    }
 
     public String getRejectionReason() {
         return this.rejectionReason;

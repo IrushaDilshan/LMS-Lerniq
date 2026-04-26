@@ -129,7 +129,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/assign",
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/assign?requestingUserId=5005",
 							"host": [
 								"{{base_url}}"
 							],
@@ -139,6 +139,13 @@
 								"tickets",
 								"{{active_ticket_id}}",
 								"assign"
+							],
+							"query": [
+								{
+									"key": "requestingUserId",
+									"value": "5005",
+									"description": "Simulated Admin ID"
+								}
 							]
 						}
 					}
