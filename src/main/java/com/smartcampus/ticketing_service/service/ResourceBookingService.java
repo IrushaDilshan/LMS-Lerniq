@@ -12,8 +12,10 @@ import com.smartcampus.ticketing_service.model.ResourceBooking;
 import com.smartcampus.ticketing_service.repository.ResourceBookingRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -147,11 +149,18 @@ public class ResourceBookingService {
             throw new IllegalArgumentException("Only PENDING or APPROVED bookings can be repeated.");
         }
 
-        int dayStep = request.getRecurrenceType() == RecurrenceType.DAILY ? 1 : 7;
+        LocalDate baseStartDate = request.getStartDate() != null ? request.getStartDate() : sourceBooking.getBookingDate().plusDays(1);
+        if (baseStartDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Repeat start date cannot be in the past.");
+        }
+
+        validateRepeatSelection(request);
+
+        LocalDate firstRepeatedDate = calculateFirstRepeatedDate(baseStartDate, request);
         List<ResourceBooking> toSave = new ArrayList<>();
 
         for (int i = 1; i <= request.getOccurrences(); i++) {
-            LocalDate repeatedDate = sourceBooking.getBookingDate().plusDays((long) i * dayStep);
+            LocalDate repeatedDate = calculateOccurrenceDate(firstRepeatedDate, request, i);
             ensureNoConflict(sourceBooking.getResourceName(), repeatedDate, sourceBooking.getStartTime(), sourceBooking.getEndTime(), null);
 
             ResourceBooking repeated = new ResourceBooking();
@@ -169,6 +178,53 @@ public class ResourceBookingService {
 
         List<ResourceBooking> saved = bookingRepository.saveAll(toSave);
         return saved.stream().map(this::mapToResponse).toList();
+    }
+
+    private void validateRepeatSelection(RepeatBookingRequest request) {
+        if (request.getRecurrenceType() == RecurrenceType.WEEKLY && request.getDayOfWeek() == null) {
+            throw new IllegalArgumentException("Select day of week for WEEKLY recurrence.");
+        }
+        if (request.getRecurrenceType() == RecurrenceType.MONTHLY && request.getDayOfMonth() == null) {
+            throw new IllegalArgumentException("Select day of month for MONTHLY recurrence.");
+        }
+    }
+
+    private LocalDate calculateFirstRepeatedDate(LocalDate baseStartDate, RepeatBookingRequest request) {
+        if (request.getRecurrenceType() == RecurrenceType.DAILY) {
+            return baseStartDate;
+        }
+        if (request.getRecurrenceType() == RecurrenceType.WEEKLY) {
+            return moveToDayOfWeekOnOrAfter(baseStartDate, request.getDayOfWeek());
+        }
+        return buildMonthlyDate(baseStartDate, request.getDayOfMonth());
+    }
+
+    private LocalDate calculateOccurrenceDate(LocalDate firstRepeatedDate, RepeatBookingRequest request, int occurrenceIndex) {
+        if (request.getRecurrenceType() == RecurrenceType.DAILY) {
+            return firstRepeatedDate.plusDays(occurrenceIndex - 1L);
+        }
+        if (request.getRecurrenceType() == RecurrenceType.WEEKLY) {
+            return firstRepeatedDate.plusWeeks(occurrenceIndex - 1L);
+        }
+
+        LocalDate monthDate = firstRepeatedDate.plusMonths(occurrenceIndex - 1L);
+        return buildMonthlyDate(monthDate, request.getDayOfMonth());
+    }
+
+    private LocalDate moveToDayOfWeekOnOrAfter(LocalDate date, DayOfWeek targetDay) {
+        int current = date.getDayOfWeek().getValue();
+        int target = targetDay.getValue();
+        int delta = target - current;
+        if (delta < 0) {
+            delta += 7;
+        }
+        return date.plusDays(delta);
+    }
+
+    private LocalDate buildMonthlyDate(LocalDate seedDate, Integer dayOfMonth) {
+        YearMonth yearMonth = YearMonth.from(seedDate);
+        int safeDay = Math.min(dayOfMonth, yearMonth.lengthOfMonth());
+        return yearMonth.atDay(safeDay);
     }
 
     private void ensureNoConflict(String resourceName, LocalDate date, LocalTime startTime, LocalTime endTime, String currentBookingId) {

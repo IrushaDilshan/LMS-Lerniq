@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+
 public class RepeatBookingRequest {
 
     @NotBlank(message = "Source booking id is required")
@@ -18,6 +21,14 @@ public class RepeatBookingRequest {
     @Min(value = 1, message = "Occurrences must be at least 1")
     @Max(value = 30, message = "Occurrences must be 30 or less")
     private Integer occurrences;
+
+    private LocalDate startDate;
+
+    private DayOfWeek dayOfWeek;
+
+    @Min(value = 1, message = "dayOfMonth must be between 1 and 31")
+    @Max(value = 31, message = "dayOfMonth must be between 1 and 31")
+    private Integer dayOfMonth;
 
     public String getSourceBookingId() {
         return sourceBookingId;
@@ -41,5 +52,29 @@ public class RepeatBookingRequest {
 
     public void setOccurrences(Integer occurrences) {
         this.occurrences = occurrences;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public DayOfWeek getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(DayOfWeek dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public Integer getDayOfMonth() {
+        return dayOfMonth;
+    }
+
+    public void setDayOfMonth(Integer dayOfMonth) {
+        this.dayOfMonth = dayOfMonth;
     }
 }

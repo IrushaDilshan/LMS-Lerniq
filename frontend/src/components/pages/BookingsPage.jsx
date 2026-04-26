@@ -18,6 +18,9 @@ const RESOURCE_OPTIONS = [
   'Innovation Hub E5',
 ];
 
+const RECURRENCE_OPTIONS = ['DAILY', 'WEEKLY', 'MONTHLY'];
+const DAY_OF_WEEK_OPTIONS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+
 function BookingsPage() {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN';
@@ -45,6 +48,15 @@ function BookingsPage() {
     bookingId: '',
     decision: 'APPROVED',
     reason: '',
+  });
+
+  const [repeatModalBooking, setRepeatModalBooking] = useState(null);
+  const [repeatForm, setRepeatForm] = useState({
+    recurrenceType: 'WEEKLY',
+    occurrences: 3,
+    startDate: '',
+    dayOfWeek: 'MONDAY',
+    dayOfMonth: 1,
   });
 
   const sortedBookings = useMemo(() => {
@@ -138,38 +150,67 @@ function BookingsPage() {
     }
   };
 
-  const handleRepeatBooking = async (booking) => {
-    setError('');
+  const openRepeatModal = (booking) => {
+    const bookingDate = booking?.bookingDate || '';
+    const bookingDateObj = bookingDate ? new Date(`${bookingDate}T00:00:00`) : new Date();
+    bookingDateObj.setDate(bookingDateObj.getDate() + 1);
 
-    const occurrencesRaw = window.prompt('How many times do you want to repeat this booking?', '3');
-    if (occurrencesRaw === null) {
+    const isoStartDate = bookingDateObj.toISOString().slice(0, 10);
+    const dayIndex = bookingDateObj.getDay();
+    const dayOfWeek = DAY_OF_WEEK_OPTIONS[(dayIndex + 6) % 7];
+    const dayOfMonth = bookingDateObj.getDate();
+
+    setRepeatForm({
+      recurrenceType: 'WEEKLY',
+      occurrences: 3,
+      startDate: isoStartDate,
+      dayOfWeek,
+      dayOfMonth,
+    });
+    setRepeatModalBooking(booking);
+  };
+
+  const closeRepeatModal = () => {
+    setRepeatModalBooking(null);
+  };
+
+  const handleSubmitRepeatBooking = async (event) => {
+    event.preventDefault();
+    if (!repeatModalBooking) {
       return;
     }
 
-    const occurrences = Number(occurrencesRaw);
+    setError('');
+
+    const occurrences = Number(repeatForm.occurrences);
     if (!Number.isInteger(occurrences) || occurrences < 1 || occurrences > 30) {
       setError('Occurrences must be a whole number between 1 and 30.');
       return;
     }
 
-    const recurrenceRaw = window.prompt('Repeat type? Enter DAILY or WEEKLY', 'WEEKLY');
-    if (recurrenceRaw === null) {
+    if (!repeatForm.startDate) {
+      setError('Please select repeat start date.');
       return;
     }
 
-    const recurrenceType = recurrenceRaw.trim().toUpperCase();
-    if (recurrenceType !== 'DAILY' && recurrenceType !== 'WEEKLY') {
-      setError('Repeat type must be DAILY or WEEKLY.');
-      return;
+    if (repeatForm.recurrenceType === 'MONTHLY') {
+      const dayOfMonth = Number(repeatForm.dayOfMonth);
+      if (!Number.isInteger(dayOfMonth) || dayOfMonth < 1 || dayOfMonth > 31) {
+        setError('For monthly repeat, day of month must be between 1 and 31.');
+        return;
+      }
     }
 
     try {
       const response = await api.post(
         '/bookings/repeat',
         {
-          sourceBookingId: booking.id,
-          recurrenceType,
+          sourceBookingId: repeatModalBooking.id,
+          recurrenceType: repeatForm.recurrenceType,
           occurrences,
+          startDate: repeatForm.startDate,
+          dayOfWeek: repeatForm.recurrenceType === 'WEEKLY' ? repeatForm.dayOfWeek : null,
+          dayOfMonth: repeatForm.recurrenceType === 'MONTHLY' ? Number(repeatForm.dayOfMonth) : null,
         },
         {
           params: {
@@ -180,6 +221,7 @@ function BookingsPage() {
       );
 
       const createdCount = Array.isArray(response.data) ? response.data.length : 0;
+      closeRepeatModal();
       window.alert(`Created ${createdCount} repeated booking(s).`);
       await loadBookings();
     } catch (err) {
@@ -423,7 +465,7 @@ function BookingsPage() {
                           {canRepeat && (
                             <button
                               type="button"
-                              onClick={() => handleRepeatBooking(booking)}
+                              onClick={() => openRepeatModal(booking)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold"
                             >
                               <Repeat className="w-3.5 h-3.5" />
@@ -451,6 +493,114 @@ function BookingsPage() {
           </div>
         )}
       </section>
+
+      {repeatModalBooking && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xl font-black text-gray-900">Repeat Booking Setup</h3>
+              <button
+                type="button"
+                onClick={closeRepeatModal}
+                className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-bold"
+              >
+                Close
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Source: <span className="font-bold text-gray-700">{repeatModalBooking.resourceName}</span> on {repeatModalBooking.bookingDate} ({repeatModalBooking.startTime} - {repeatModalBooking.endTime})
+            </p>
+
+            <form onSubmit={handleSubmitRepeatBooking} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Repeat Type
+                <select
+                  value={repeatForm.recurrenceType}
+                  onChange={(e) => setRepeatForm((prev) => ({ ...prev, recurrenceType: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                >
+                  {RECURRENCE_OPTIONS.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Number of Repeats
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={repeatForm.occurrences}
+                  onChange={(e) => setRepeatForm((prev) => ({ ...prev, occurrences: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700 md:col-span-2">
+                Repeat Start Date
+                <input
+                  type="date"
+                  value={repeatForm.startDate}
+                  onChange={(e) => setRepeatForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                />
+              </label>
+
+              {repeatForm.recurrenceType === 'WEEKLY' && (
+                <label className="space-y-1 text-sm font-semibold text-gray-700 md:col-span-2">
+                  Select Day of Week
+                  <select
+                    value={repeatForm.dayOfWeek}
+                    onChange={(e) => setRepeatForm((prev) => ({ ...prev, dayOfWeek: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  >
+                    {DAY_OF_WEEK_OPTIONS.map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {repeatForm.recurrenceType === 'MONTHLY' && (
+                <label className="space-y-1 text-sm font-semibold text-gray-700 md:col-span-2">
+                  Select Day of Month
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={repeatForm.dayOfMonth}
+                    onChange={(e) => setRepeatForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  />
+                </label>
+              )}
+
+              <div className="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeRepeatModal}
+                  className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  <Repeat className="w-4 h-4" />
+                  Create Repeated Bookings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {isAdmin && (
         <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm">
