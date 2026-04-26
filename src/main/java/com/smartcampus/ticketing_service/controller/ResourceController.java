@@ -17,6 +17,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * Resource Controller - Module A: Facilities & Assets Catalogue
+ * Manages campus resources including Lecture Halls, Labs, Meeting Rooms and Equipment
+ *
+ * Endpoints:
+ * GET    /api/resources               - Get all resources with filters
+ * GET    /api/resources/{id}          - Get resource by ID
+ * POST   /api/resources               - Create resource (Admin only)
+ * PUT    /api/resources/{id}          - Update resource (Admin only)
+ * DELETE /api/resources/{id}          - Delete resource (Admin only)
+ * PATCH  /api/resources/{id}/status   - Update status (Admin only)
+ *
+ * @author IrushaDilshan
+ */
+
 @RestController
 @RequestMapping("/api/resources")
 @RequiredArgsConstructor
