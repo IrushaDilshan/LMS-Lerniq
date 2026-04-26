@@ -3,6 +3,7 @@
 @theme {
   --animate-bounce-subtle: bounce-subtle 2s infinite;
   --animate-spin-slow: spin 3s linear infinite;
+  --animate-pulse-glow: pulse-glow 3s infinite;
   
   @keyframes bounce-subtle {
     0%, 100% {
@@ -14,6 +15,41 @@
       animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
     }
   }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.6;
+      box-shadow: 0 0 0px rgba(59, 130, 246, 0);
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+  }
+}
+
+@layer base {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  body {
+    @apply text-slate-900 bg-[#F8FAFC];
+  }
 }
 
 @layer utilities {
@@ -21,8 +57,17 @@
     animation: fadeIn 0.4s ease-out forwards;
   }
 
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-xl;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 }
+

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class TicketResponse {
-    private Long id;
+    private String id;
     private String resourceLocation;
     private String category;
     private String description;
@@ -15,12 +15,35 @@ public class TicketResponse {
     private String rejectionReason;
     private TicketPriority priority;
     private String preferredContactDetails;
+    private String contactEmail;
+    private String contactPhone;
     private TicketStatus status;
     private List<String> attachmentUrls;
     private Long createdByUserId;
     private Long assignedTechnicianId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String createdByEmail;
+    private String createdByUserName;
+    private String assignedTechnicianName;
+    private Integer rating;
+    private String feedbackComment;
+
+    public String getCreatedByUserName() {
+        return createdByUserName;
+    }
+
+    public void setCreatedByUserName(String createdByUserName) {
+        this.createdByUserName = createdByUserName;
+    }
+
+    public String getAssignedTechnicianName() {
+        return assignedTechnicianName;
+    }
+
+    public void setAssignedTechnicianName(String assignedTechnicianName) {
+        this.assignedTechnicianName = assignedTechnicianName;
+    }
 
     public String getRejectionReason() {
         return this.rejectionReason;
@@ -30,11 +53,11 @@ public class TicketResponse {
         this.rejectionReason = rejectionReason;
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
     
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -86,6 +109,22 @@ public class TicketResponse {
         this.preferredContactDetails = preferredContactDetails;
     }
 
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
     public TicketStatus getStatus() {
         return this.status;
     }
@@ -132,6 +171,30 @@ public class TicketResponse {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getFeedbackComment() {
+        return feedbackComment;
+    }
+
+    public void setFeedbackComment(String feedbackComment) {
+        this.feedbackComment = feedbackComment;
     }
 
 }

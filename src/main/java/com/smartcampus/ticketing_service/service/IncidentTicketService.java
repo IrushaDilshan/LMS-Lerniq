@@ -9,11 +9,12 @@ import com.smartcampus.ticketing_service.model.IncidentTicket;
 import com.smartcampus.ticketing_service.model.TicketStatus;
 import com.smartcampus.ticketing_service.model.TicketComment;
 import com.smartcampus.ticketing_service.repository.IncidentTicketRepository;
-import com.smartcampus.ticketing_service.repository.TicketCommentRepository;
 import com.smartcampus.ticketing_service.dto.TicketStatusUpdateRequest;
 import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
-import lombok.RequiredArgsConstructor;
+import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
+import com.smartcampus.ticketing_service.dto.TicketFeedbackRequest;
+import com.smartcampus.ticketing_service.util.SimulatedUserContext;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,12 +26,12 @@ public class IncidentTicketService {
 
     private final IncidentTicketRepository ticketRepository;
     private final FileStorageService fileStorageService;
-    private final TicketCommentRepository ticketCommentRepository;
+    private final EmailService emailService;
 
-    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService, TicketCommentRepository ticketCommentRepository) {
+    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService, EmailService emailService) {
         this.ticketRepository = ticketRepository;
         this.fileStorageService = fileStorageService;
-        this.ticketCommentRepository = ticketCommentRepository;
+        this.emailService = emailService;
     }
 
     public TicketResponse createTicket(TicketCreateRequest request, List<MultipartFile> files) {
@@ -44,7 +45,20 @@ public class IncidentTicketService {
         ticket.setDescription(request.getDescription());
         ticket.setPriority(request.getPriority());
         ticket.setPreferredContactDetails(request.getPreferredContactDetails());
-        ticket.setCreatedByUserId(request.getCreatedByUserId());
+        ticket.setContactEmail(request.getContactEmail());
+        ticket.setContactPhone(request.getContactPhone());
+        
+        // Use simulated ID if not provided
+        Long creatorId = request.getCreatedByUserId() != null ? request.getCreatedByUserId() : 1001L;
+        ticket.setCreatedByUserId(creatorId);
+        
+        // Auto-fill email if missing from simulated user
+        String email = request.getCreatedByEmail();
+        if (email == null || email.isEmpty()) {
+            email = SimulatedUserContext.getUserById(creatorId).getEmail();
+        }
+        ticket.setCreatedByEmail(email);
+        
         ticket.setStatus(TicketStatus.OPEN);
 
         // Save first to get ID for file prefix
@@ -59,10 +73,34 @@ public class IncidentTicketService {
                     imageUrls.add(savedPath);
                 }
             }
+            ticket.setAttachmentUrls(imageUrls);
+            ticket = ticketRepository.save(ticket);
         }
-        
-        ticket.setAttachmentUrls(imageUrls);
-        ticket = ticketRepository.save(ticket);
+
+        try {
+            String recipient = ticket.getCreatedByEmail();
+            
+            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                String contact = ticket.getContactEmail();
+                if (contact == null || contact.trim().isEmpty()) {
+                    contact = ticket.getPreferredContactDetails();
+                }
+                if (contact != null && contact.contains("@")) {
+                    recipient = contact;
+                }
+            }
+
+            System.out.println("DEBUG: Final Recipient for Notification: [" + recipient + "]");
+            
+            if (recipient != null && !recipient.trim().isEmpty() && recipient.contains("@")) {
+                emailService.sendTicketCreatedEmail(recipient, ticket.getId(), ticket.getCategory());
+            } else {
+                System.out.println("No valid email provided for ticket " + ticket.getId() + " (Value: " + recipient + ")");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send email: " + e.getMessage());
+        }
 
         return mapToResponse(ticket);
     }
@@ -71,29 +109,25 @@ public class IncidentTicketService {
         List<IncidentTicket> tickets;
 
         if (status != null && userId != null) {
-            // Both filters applied
             tickets = ticketRepository.findByStatusAndCreatedByUserId(status, userId);
         } else if (status != null) {
-            // Filter by status only
             tickets = ticketRepository.findByStatus(status);
         } else if (userId != null) {
-            // Filter by user only
             tickets = ticketRepository.findByCreatedByUserId(userId);
         } else {
-            // No filter — return all
             tickets = ticketRepository.findAll();
         }
 
         return tickets.stream().map(this::mapToResponse).toList();
     }
 
-    public TicketResponse getTicketById(Long id) {
+    public TicketResponse getTicketById(String id) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         return mapToResponse(ticket);
     }
 
-    public TicketResponse updateTicketStatus(Long id, TicketStatusUpdateRequest updateRequest) {
+    public TicketResponse updateTicketStatus(String id, TicketStatusUpdateRequest updateRequest) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         ticket.setStatus(updateRequest.getStatus());
@@ -104,10 +138,74 @@ public class IncidentTicketService {
             ticket.setRejectionReason(updateRequest.getRejectionReason());
         }
         ticket = ticketRepository.save(ticket);
+
+        try {
+            String recipient = ticket.getCreatedByEmail();
+            
+            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                String contact = ticket.getContactEmail();
+                if (contact == null || contact.trim().isEmpty()) {
+                    contact = ticket.getPreferredContactDetails();
+                }
+                if (contact != null && contact.contains("@")) {
+                    recipient = contact;
+                }
+            }
+            
+            if (recipient != null && recipient.contains("@")) {
+                emailService.sendTicketStatusUpdatedEmail(recipient, ticket.getId(), ticket.getCategory(), ticket.getStatus().name());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send email: " + e.getMessage());
+        }
+
         return mapToResponse(ticket);
     }
 
-    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+    public TicketResponse updateTicket(String id, TicketUpdateRequest request, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to edit this ticket as you are not the author.");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be edited while they are in OPEN status.");
+        }
+
+        ticket.setResourceLocation(request.getResourceLocation());
+        ticket.setCategory(request.getCategory());
+        ticket.setDescription(request.getDescription());
+        ticket.setPriority(request.getPriority());
+        ticket.setPreferredContactDetails(request.getPreferredContactDetails());
+
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
+    }
+
+    public void deleteTicket(String id, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+        
+        if (!ticket.getCreatedByUserId().equals(requestingUserId)) {
+            throw new UnauthorizedException("You are not authorized to delete this ticket as you are not the author.");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalArgumentException("Tickets can only be deleted while they are in OPEN status.");
+        }
+
+        ticketRepository.delete(ticket);
+    }
+
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, Long requestingUserId) {
+        // Role check using simulated context
+        if (!SimulatedUserContext.isAdmin(requestingUserId)) {
+            throw new UnauthorizedException("Access Denied: Only ADMIN can assign technicians to missions.");
+        }
+
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
 
@@ -116,48 +214,58 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<CommentResponse> getComments(Long ticketId) {
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
+    public TicketResponse submitFeedback(String id, TicketFeedbackRequest request) {
+        IncidentTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+
+        if (ticket.getStatus() != TicketStatus.RESOLVED && ticket.getStatus() != TicketStatus.CLOSED) {
+            throw new IllegalStateException("Feedback can only be submitted for RESOLVED or CLOSED tickets.");
         }
-        return ticketCommentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)
-                .stream().map(this::mapToCommentResponse).toList();
+
+        ticket.setRating(request.getRating());
+        ticket.setFeedbackComment(request.getFeedbackComment());
+        
+        ticket = ticketRepository.save(ticket);
+        return mapToResponse(ticket);
     }
 
-    public CommentResponse addComment(Long ticketId, CommentCreateRequest request) {
+    public List<CommentResponse> getComments(String ticketId) {
+        IncidentTicket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
+        return ticket.getComments().stream()
+                .sorted((c1, c2) -> c1.getCreatedAt().compareTo(c2.getCreatedAt()))
+                .map(this::mapToCommentResponse).toList();
+    }
+
+    public CommentResponse addComment(String ticketId, CommentCreateRequest request) {
         IncidentTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 
         TicketComment comment = new TicketComment();
-        comment.setTicket(ticket);
         comment.setContent(request.getContent());
         comment.setCreatedByUserId(request.getCreatedByUserId());
         
-        comment = ticketCommentRepository.save(comment);
+        ticket.getComments().add(comment);
+        ticketRepository.save(ticket);
+        
         return mapToCommentResponse(comment);
     }
 
-    public void deleteComment(Long ticketId, Long commentId, Long requestingUserId) {
-        // Verify the ticket exists
-        if (!ticketRepository.existsById(ticketId)) {
-            throw new ResourceNotFoundException("Ticket not found with id: " + ticketId);
-        }
+    public void deleteComment(String ticketId, String commentId, Long requestingUserId) {
+        IncidentTicket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 
-        // Verify the comment exists
-        TicketComment comment = ticketCommentRepository.findById(commentId)
+        TicketComment comment = ticket.getComments().stream()
+                .filter(c -> c.getId().equals(commentId))
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
 
-        // Verify the comment belongs to this ticket
-        if (!comment.getTicket().getId().equals(ticketId)) {
-            throw new ResourceNotFoundException("Comment " + commentId + " does not belong to ticket " + ticketId);
-        }
-
-        // Ownership check — only the author can delete their own comment
         if (!comment.getCreatedByUserId().equals(requestingUserId)) {
             throw new UnauthorizedException("You can only delete your own comments.");
         }
 
-        ticketCommentRepository.delete(comment);
+        ticket.getComments().removeIf(c -> c.getId().equals(commentId));
+        ticketRepository.save(ticket);
     }
 
     private CommentResponse mapToCommentResponse(TicketComment comment) {
@@ -166,19 +274,12 @@ public class IncidentTicketService {
         response.setContent(comment.getContent());
         response.setCreatedByUserId(comment.getCreatedByUserId());
         response.setCreatedAt(comment.getCreatedAt());
-        // For now mock author name based on ID
+        
         if (comment.getCreatedByUserId() != null) {
-            if (comment.getCreatedByUserId() == 1L) {
-                response.setAuthorName("Student User");
-            } else if (comment.getCreatedByUserId() == 99L) {
-                response.setAuthorName("Admin Manager");
-            } else if (comment.getCreatedByUserId() == 10L) {
-                response.setAuthorName("John Doe (Tech)");
-            } else {
-                response.setAuthorName("User " + comment.getCreatedByUserId());
-            }
+            SimulatedUserContext.MockUser user = SimulatedUserContext.getUserById(comment.getCreatedByUserId());
+            response.setAuthorName(user.getName() + " (" + user.getRole() + ")");
         } else {
-            response.setAuthorName("Unknown System User");
+            response.setAuthorName("System Automaton");
         }
         
         return response;
@@ -194,10 +295,25 @@ public class IncidentTicketService {
         response.setRejectionReason(ticket.getRejectionReason());
         response.setPriority(ticket.getPriority());
         response.setPreferredContactDetails(ticket.getPreferredContactDetails());
+        response.setContactEmail(ticket.getContactEmail());
+        response.setContactPhone(ticket.getContactPhone());
         response.setStatus(ticket.getStatus());
         response.setAttachmentUrls(ticket.getAttachmentUrls());
         response.setCreatedByUserId(ticket.getCreatedByUserId());
-        response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
+        response.setCreatedByEmail(ticket.getCreatedByEmail());
+        
+        // Populating names from Simulated Context
+        SimulatedUserContext.MockUser reporter = SimulatedUserContext.getUserById(ticket.getCreatedByUserId());
+        response.setCreatedByUserName(reporter.getName());
+        
+        if (ticket.getAssignedTechnicianId() != null) {
+            SimulatedUserContext.MockUser tech = SimulatedUserContext.getUserById(ticket.getAssignedTechnicianId());
+            response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
+            response.setAssignedTechnicianName(tech.getName());
+        }
+
+        response.setRating(ticket.getRating());
+        response.setFeedbackComment(ticket.getFeedbackComment());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
         return response;

@@ -1,18 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Plus, List, AlertTriangle, Clock, CheckCircle, TrendingUp, X } from 'lucide-react';
-import TicketSubmissionForm from '../tickets/TicketSubmissionForm';
+import { 
+  Wrench, Plus, List, AlertTriangle, Clock, CheckCircle, 
+  TrendingUp, X, Activity, Shield, Bell, Search, 
+  Filter, Calendar, Gauge, Zap, LayoutDashboard
+} from 'lucide-react';
 import TicketList from '../tickets/TicketList';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
-const StatCard = ({ icon: Icon, label, value, color, bg }) => (
-  <div className={`flex items-center gap-5 px-8 py-7 rounded-[2.5rem] bg-white border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] group cursor-pointer`}>
-    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} transition-transform group-hover:scale-110`}>
-      <Icon className="w-7 h-7" />
+const StatCard = ({ icon: Icon, label, value, color, bg, trend }) => (
+  <div className={`flex flex-col gap-4 p-8 rounded-[2.5rem] bg-white border border-gray-100 shadow-[0_15px_40px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(0,0,0,0.06)] group cursor-pointer relative overflow-hidden`}>
+    <div className={`absolute top-0 right-0 w-24 h-24 ${bg} opacity-10 rounded-full blur-3xl -mr-12 -mt-12 transition-all group-hover:scale-150`} />
+    
+    <div className="flex items-center justify-between relative z-10">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${color} transition-transform group-hover:scale-110 shadow-sm`}>
+            <Icon className="w-6 h-6" />
+        </div>
+        {trend && (
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${trend > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-500'}`}>
+                {trend > 0 ? <TrendingUp className="w-3 h-3" /> : null}
+                {trend}%
+            </div>
+        )}
     </div>
-    <div>
-      <p className="text-3xl font-black text-[#061224] leading-none tracking-tight">{value}</p>
-      <p className="text-[10px] text-gray-400 mt-1.5 font-black uppercase tracking-widest">{label}</p>
+
+    <div className="relative z-10">
+      <p className="text-4xl font-black text-[#061224] leading-none tracking-tight mb-2">{value}</p>
+      <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">{label}</p>
+    </div>
+
+    <div className="mt-4 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden relative z-10">
+        <div className={`h-full ${color.replace('text-', 'bg-')} opacity-60 transition-all duration-1000 ease-out`} style={{ width: '70%' }} />
     </div>
   </div>
 );
@@ -22,7 +40,7 @@ const TicketDashboard = () => {
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'new'
   const [stats, setStats] = useState({ open: 0, inProgress: 0, resolved: 0, total: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
-  const [ticketListKey, setTicketListKey] = useState(0); // force refresh after submit
+  const [ticketListKey, setTicketListKey] = useState(0); 
   const [newlySubmittedId, setNewlySubmittedId] = useState(null);
 
   useEffect(() => {
@@ -43,7 +61,7 @@ const TicketDashboard = () => {
         rejected:   tickets.filter(t => t.status === 'REJECTED').length,
       });
     } catch (e) {
-      // non-critical
+      console.error(e);
     } finally {
       setStatsLoading(false);
     }
@@ -52,71 +70,90 @@ const TicketDashboard = () => {
   const handleTicketSubmitted = (id) => {
     setNewlySubmittedId(id);
     setActiveTab('list');
-    setTicketListKey(k => k + 1); // re-render TicketList & re-fetch stats
+    setTicketListKey(k => k + 1);
   };
 
   return (
-    <div className="space-y-10 max-w-6xl mx-auto animate-fade-in pb-20">
+    <div className="space-y-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20">
 
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between flex-wrap gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-[1.5rem] bg-[#061224] flex items-center justify-center shadow-2xl shadow-blue-900/40">
-            <Wrench className="w-8 h-8 text-blue-300" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-black text-[#061224] tracking-tight">Support Hub</h1>
-            <p className="text-gray-500 font-medium text-sm mt-0.5 tracking-tight">System operations and facility management portal.</p>
-          </div>
+      <div className="relative group overflow-hidden rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-200/10">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061224] via-[#0d2147] to-[#1a365d] z-0">
+            <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px]" />
         </div>
+        
+        <div className="relative z-10 p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+                <div className="w-20 h-20 rounded-[2rem] bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-2xl group-hover:scale-105 transition-transform duration-500">
+                    <Wrench className="w-10 h-10 text-blue-300" />
+                </div>
+                <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-400/10 border border-blue-400/20 text-[10px] font-black tracking-[0.2em] uppercase text-blue-300 mb-2">
+                        <Shield className="w-3 h-3" /> System Operations
+                    </div>
+                    <h1 className="text-4xl font-black text-white tracking-tight">Support Hub</h1>
+                    <p className="text-blue-100/60 font-medium text-sm mt-1 tracking-tight max-w-md">Management console for campus facilities and resource maintenance logs.</p>
+                </div>
+            </div>
 
-        {/* New Ticket CTA - Only for USER role */}
-        {currentUser.role === 'USER' && (
-          <button
-            onClick={() => setActiveTab(activeTab === 'new' ? 'list' : 'new')}
-            className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all shadow-xl
-              ${activeTab === 'new'
-                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-gray-200/20'
-                : 'bg-[#061224] text-white hover:bg-[#1a365d] shadow-blue-900/30 active:scale-95'
-              }`}
-          >
-            {activeTab === 'new' ? <><X className="w-5 h-5" /> Cancel Request</> : <><Plus className="w-5 h-5" /> New Ticket</>}
-          </button>
-        )}
+            {currentUser.role === 'USER' && (
+                <button
+                    onClick={() => setActiveTab(activeTab === 'new' ? 'list' : 'new')}
+                    className={`inline-flex items-center gap-3 px-10 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl active:scale-95
+                    ${activeTab === 'new'
+                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                        : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/30'
+                    }`}
+                >
+                    {activeTab === 'new' ? <><X className="w-5 h-5" /> Cancel Mission</> : <><Plus className="w-5 h-5" /> New Log Report</>}
+                </button>
+            )}
+        </div>
       </div>
 
       {/* ── Stats Row ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={TrendingUp}   label="Total Tickets"  value={statsLoading ? '—' : stats.total}      color="bg-blue-50 text-blue-600" />
-        <StatCard icon={AlertTriangle} label="Open Status"    value={statsLoading ? '—' : stats.open}       color="bg-amber-50 text-amber-600" />
-        <StatCard icon={Clock}         label="In Progress"   value={statsLoading ? '—' : stats.inProgress} color="bg-indigo-50 text-indigo-600" />
-        <StatCard icon={CheckCircle}   label="Resolved"      value={statsLoading ? '—' : stats.resolved}   color="bg-emerald-50 text-emerald-600" />
+        <StatCard icon={Activity}       label="Total Logs"     value={statsLoading ? '—' : stats.total}      color="text-blue-600"    bg="bg-blue-600"    trend={12} />
+        <StatCard icon={AlertTriangle} label="Open Issues"     value={statsLoading ? '—' : stats.open}       color="text-amber-600"   bg="bg-amber-600"   trend={-5} />
+        <StatCard icon={Clock}         label="In Progress"    value={statsLoading ? '—' : stats.inProgress} color="text-indigo-600"  bg="bg-indigo-600"  trend={3} />
+        <StatCard icon={CheckCircle}   label="Resolved"       value={statsLoading ? '—' : stats.resolved}   color="text-emerald-600" bg="bg-emerald-600" trend={8} />
       </div>
 
-      {/* ── Tab Switcher ── */}
-      <div className="flex items-center gap-2 bg-gray-100/50 p-1.5 rounded-2xl w-fit border border-gray-100 backdrop-blur-sm">
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all
-            ${activeTab === 'list' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-        >
-          <List className="w-4 h-4" /> Management Queue
-        </button>
-        {currentUser.role === 'USER' && (
-          <button
-            onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all
-              ${activeTab === 'new' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            <Plus className="w-4 h-4" /> Report Incident
-          </button>
-        )}
+      {/* ── View Control ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-2">
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-[1.5rem] border border-gray-100 shadow-sm w-fit">
+            <button
+                onClick={() => setActiveTab('list')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+                ${activeTab === 'list' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+                <LayoutDashboard className="w-4 h-4" /> Management Queue
+            </button>
+            {currentUser.role === 'USER' && (
+                <button
+                    onClick={() => setActiveTab('new')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+                    ${activeTab === 'new' ? 'bg-[#061224] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                    <Plus className="w-4 h-4" /> Report Incident
+                </button>
+            )}
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                Live Uplink Active
+            </div>
+        </div>
       </div>
 
       {/* ── Tab Content ── */}
       <div className="animate-fade-in">
         {activeTab === 'list' ? (
-          <div className="rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-blue-900/5 bg-white">
+          <div className="rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-gray-200/20 bg-white group/list transition-all duration-500 hover:shadow-gray-300/30">
              <TicketList key={ticketListKey} highlightTicketId={newlySubmittedId} />
           </div>
         ) : (
@@ -142,12 +179,14 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
     category: '',
     description: '',
     priority: 'LOW',
-    preferredContactDetails: '',
+    contactEmail: '',
+    contactPhone: '',
   });
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -170,7 +209,23 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus(null);
-    setErrorMessage('');
+    const errors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!emailRegex.test(formData.contactEmail)) {
+      errors.contactEmail = 'Please enter a valid email address.';
+    }
+    if (!phoneRegex.test(formData.contactPhone)) {
+      errors.contactPhone = 'Phone number must be exactly 10 digits.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       const payload = new FormData();
@@ -179,7 +234,9 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         category: formData.category,
         description: formData.description,
         priority: formData.priority,
-        preferredContactDetails: formData.preferredContactDetails || 'N/A',
+        contactEmail: formData.contactEmail,
+        contactPhone: formData.contactPhone,
+        preferredContactDetails: formData.contactEmail + " / " + formData.contactPhone,
         createdByUserId: 1,
       })], { type: 'application/json' });
       payload.append('ticket', blob);
@@ -191,7 +248,8 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         setSubmitStatus('success');
         const newId = res.data.id;
         setTimeout(() => { if (onSuccess) onSuccess(newId); }, 1500);
-        setFormData({ resourceLocation: '', category: '', description: '', priority: 'LOW', preferredContactDetails: '' });
+        setFormData({ resourceLocation: '', category: '', description: '', priority: 'LOW', contactEmail: '', contactPhone: '' });
+        setFieldErrors({});
         setFiles([]);
       }
     } catch (err) {
@@ -210,155 +268,128 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(8,112,184,0.08)] border border-gray-100">
+    <div className="max-w-4xl mx-auto bg-white rounded-[3rem] overflow-hidden shadow-2xl shadow-gray-200/50 border border-gray-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#061224] via-[#0d2147] to-[#1a365d] p-8 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400 rounded-full opacity-5 -mr-20 -mt-20 blur-3xl" />
-        <div className="absolute bottom-0 left-10 w-40 h-40 bg-indigo-400 rounded-full opacity-10 blur-2xl" />
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="p-3 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm">
+      <div className="bg-gradient-to-r from-[#061224] via-[#0d2147] to-[#1a365d] p-10 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500 opacity-5 rounded-full blur-[100px] -mr-40 -mt-40" />
+        <div className="relative z-10 flex items-center gap-6">
+          <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] border border-white/20 backdrop-blur-md flex items-center justify-center">
             <Ticket className="w-8 h-8 text-blue-300" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Report an Incident</h2>
-            <p className="text-blue-200/80 text-sm mt-1">Submit a maintenance request for campus facilities or equipment.</p>
+            <h2 className="text-3xl font-black tracking-tight leading-none mb-2">Report an Incident</h2>
+            <p className="text-blue-100/60 font-medium text-sm">Initiate a formal maintenance request for campus assets.</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="p-10 space-y-8">
         {/* Status banners */}
         {submitStatus === 'success' && (
-          <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl flex items-start gap-3 border border-emerald-100">
-            <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl flex items-start gap-4 border border-emerald-100 animate-fade-in">
+            <CheckCircle2 className="w-6 h-6 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-emerald-800">Ticket Submitted!</p>
-              <p className="text-sm mt-0.5">The maintenance team has been notified. Redirecting to your tickets…</p>
+              <p className="font-black text-emerald-800 uppercase tracking-widest text-xs mb-1">Success Status</p>
+              <p className="text-lg font-bold">Ticket Logged Successfully</p>
+              <p className="text-sm opacity-80 mt-1">The maintenance uplink is established. Redirecting...</p>
             </div>
           </div>
         )}
-        {submitStatus === 'error' && (
-          <div className="bg-rose-50 text-rose-700 p-4 rounded-xl flex items-start gap-3 border border-rose-100">
-            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-rose-800">Submission Failed</p>
-              <p className="text-sm mt-0.5">{errorMessage}</p>
-            </div>
-          </div>
-        )}
-        {errorMessage && submitStatus !== 'error' && (
-          <div className="bg-amber-50 text-amber-700 p-3 rounded-xl text-sm border border-amber-100">{errorMessage}</div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Category */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Category <span className="text-rose-400">*</span></label>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Issue Category</label>
             <select name="category" value={formData.category} onChange={handleInputChange} required
-              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
-              <option value="" disabled>Select an issue category</option>
-              <option value="Hardware">🖥️ Hardware / Equipment</option>
-              <option value="Software">💻 Software / Network</option>
-              <option value="Facility">🏛️ Facility / Room Maintenance</option>
-              <option value="Other">📋 Other</option>
+              className="w-full bg-gray-50 border border-gray-100 text-gray-900 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none transition-all appearance-none shadow-sm cursor-pointer">
+              <option value="" disabled>Select category</option>
+              <option value="Hardware">Hardware / Equipment</option>
+              <option value="Software">Software / Network</option>
+              <option value="Facility">Facility Maintenance</option>
+              <option value="Other">Other Issues</option>
             </select>
           </div>
 
-          {/* Priority with colored dot */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Priority Level <span className="text-rose-400">*</span></label>
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Mission Priority</label>
             <div className="relative">
               <select name="priority" value={formData.priority} onChange={handleInputChange} required
-                className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none">
+                className="w-full bg-gray-50 border border-gray-100 text-gray-900 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none transition-all appearance-none shadow-sm cursor-pointer">
                 {Object.entries(priorityConfig).map(([val, cfg]) => (
-                  <option key={val} value={val}>{cfg.label}</option>
+                  <option key={val} value={val}>{cfg.label.split(' — ')[0]}</option>
                 ))}
               </select>
-              <span className={`absolute right-10 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ${priorityConfig[formData.priority].dot}`} />
+              <div className={`absolute right-12 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${priorityConfig[formData.priority].dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
             </div>
           </div>
 
-          {/* Resource Location */}
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Resource or Location <span className="text-rose-400">*</span></label>
+          <div className="md:col-span-2 space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Deployment Location</label>
             <input type="text" name="resourceLocation" value={formData.resourceLocation} onChange={handleInputChange}
-              placeholder="e.g. Hall A, Projector in Lab B" required
-              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
+              placeholder="e.g. Block C, Level 2, Room 405" required
+              className="w-full bg-gray-50 border border-gray-100 text-gray-900 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none transition-all shadow-sm" />
           </div>
 
-          {/* Contact Details */}
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Preferred Contact <span className="text-rose-400">*</span></label>
-            <input type="text" name="preferredContactDetails" value={formData.preferredContactDetails} onChange={handleInputChange}
-              placeholder="e.g. your_email@student.sliit.lk or phone number" required
-              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Contact Uplink (Email)</label>
+            <input type="email" name="contactEmail" value={formData.contactEmail} onChange={handleInputChange}
+              placeholder="id@sliit.lk" required
+              className={`w-full bg-gray-50 border ${fieldErrors.contactEmail ? 'border-rose-300' : 'border-gray-100'} text-gray-900 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none transition-all shadow-sm`} />
           </div>
 
-          {/* Description */}
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Detailed Description <span className="text-rose-400">*</span></label>
-            <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="4"
-              placeholder="Describe the issue in detail — what happened, when, and how it's affecting you..."
-              className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-all" />
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Secure Phone Line</label>
+            <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleInputChange}
+              placeholder="07XXXXXXXX" required
+              className={`w-full bg-gray-50 border ${fieldErrors.contactPhone ? 'border-rose-300' : 'border-gray-100'} text-gray-900 rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none transition-all shadow-sm`} />
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Mission Briefing (Description)</label>
+            <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="5"
+              placeholder="Provide a comprehensive briefing of the incident..."
+              className="w-full bg-gray-50 border border-gray-100 text-gray-900 rounded-[2rem] px-6 py-5 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:bg-white outline-none resize-none transition-all shadow-sm leading-relaxed" />
           </div>
         </div>
 
-        {/* File Upload */}
-        <div className="space-y-3">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Evidence Images <span className="text-gray-400 font-normal normal-case">(optional, max 3)</span>
-          </label>
-          <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-colors group
-            ${files.length >= 3 ? 'border-gray-200 bg-gray-50/50 cursor-not-allowed' : 'border-gray-300 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer'}`}>
-            <input type="file" multiple accept="image/*" onChange={handleFileChange}
-              disabled={files.length >= 3}
-              className="absolute inset-0 w-full h-full opacity-0 disabled:cursor-not-allowed cursor-pointer" />
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105
-                ${files.length >= 3 ? 'bg-gray-100 text-gray-400' : 'bg-blue-100 text-blue-600'}`}>
-                <UploadCloud className="w-6 h-6" />
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Evidence Attachments (Optional)</label>
+          <div className={`relative border-2 border-dashed rounded-[2rem] p-8 transition-all group
+            ${files.length >= 3 ? 'border-gray-100 bg-gray-50/50 opacity-50' : 'border-gray-200 bg-gray-50/30 hover:border-blue-400 hover:bg-blue-50/20 cursor-pointer shadow-inner'}`}>
+            <input type="file" multiple accept="image/*" onChange={handleFileChange} disabled={files.length >= 3}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-500 transition-transform group-hover:scale-110">
+                <UploadCloud className="w-8 h-8" />
               </div>
               <div>
-                <p className="font-semibold text-gray-700 text-sm">
-                  {files.length >= 3 ? 'Maximum images attached' : 'Click to upload or drag and drop'}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 10 MB each · {3 - files.length} slot{3 - files.length !== 1 ? 's' : ''} remaining</p>
+                <p className="font-black text-gray-900 text-sm tracking-tight uppercase">Upload Reconnaissance Data</p>
+                <p className="text-xs text-gray-400 font-medium mt-1">PNG or JPG up to 10MB · Max 3 files</p>
               </div>
             </div>
           </div>
 
           {files.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-4">
               {files.map((file, i) => (
-                <div key={i} className="relative group aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
+                <div key={i} className="relative group aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-lg">
                   <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[#061224]/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                     <button type="button" onClick={() => removeFile(i)}
-                      className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-rose-500 shadow">
+                      className="p-2 bg-rose-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform">
                       <XIcon className="w-4 h-4" />
                     </button>
+                    <span className="text-[9px] text-white font-black uppercase tracking-widest truncate max-w-[80%] px-2">{file.name}</span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-white text-xs truncate">{file.name}</div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Submit */}
         <button type="submit" disabled={isSubmitting}
-          className="w-full bg-[#061224] text-white hover:bg-[#1a365d] active:scale-[0.99] transition-all rounded-xl py-4 font-bold text-base flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-900/20">
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Submitting…
-            </>
-          ) : (
-            <><Send className="w-5 h-5" /> Submit Ticket</>
-          )}
+          className="w-full bg-[#061224] text-white hover:bg-blue-600 active:scale-[0.98] transition-all rounded-2xl py-6 font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 disabled:opacity-50 shadow-2xl shadow-blue-900/20">
+          {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+          {isSubmitting ? 'Transmitting Data...' : 'Confirm & Deploy Log'}
         </button>
       </form>
     </div>
@@ -366,3 +397,4 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
 };
 
 export default TicketDashboard;
+

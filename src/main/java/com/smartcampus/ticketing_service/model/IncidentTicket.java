@@ -1,64 +1,52 @@
 package com.smartcampus.ticketing_service.model;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "incident_tickets")
+@Document(collection = "incident_tickets")
 public class IncidentTicket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    // This could also be a ManyToOne mapping to a Resource entity, depending on Component 1's implementation.
-    // For now, we store the identifier or location string.
-    @Column(nullable = false)
     private String resourceLocation;
-
-    @Column(nullable = false)
     private String category;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private TicketPriority priority;
-
-    @Column(nullable = false)
     private String preferredContactDetails;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    private String contactEmail;
+    private String contactPhone;
     private TicketStatus status = TicketStatus.OPEN;
-
-    @ElementCollection
-    @CollectionTable(name = "ticket_attachments", joinColumns = @JoinColumn(name = "ticket_id"))
-    @Column(name = "image_url")
     private List<String> attachmentUrls = new ArrayList<>();
-
-    @Column(nullable = false)
     private Long createdByUserId;
-
     private Long assignedTechnicianId;
-
-    @Column(columnDefinition = "TEXT")
     private String resolutionNote;
-
-    @Column(columnDefinition = "TEXT")
     private String rejectionReason;
+    private String createdByEmail;
+    private Integer rating;
+    private String feedbackComment;
 
-    @CreationTimestamp
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    private List<TicketComment> comments = new ArrayList<>();
+
+    public List<TicketComment> getComments() {
+        return this.comments;
+    }
+
+    public void setComments(List<TicketComment> comments) {
+        this.comments = comments;
+    }
 
     public String getRejectionReason() {
         return this.rejectionReason;
@@ -76,11 +64,11 @@ public class IncidentTicket {
         this.resolutionNote = resolutionNote;
     }
 
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
     
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -122,6 +110,22 @@ public class IncidentTicket {
     
     public void setPreferredContactDetails(String preferredContactDetails) {
         this.preferredContactDetails = preferredContactDetails;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
     }
 
     public TicketStatus getStatus() {
@@ -170,6 +174,30 @@ public class IncidentTicket {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedByEmail() {
+        return createdByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        this.createdByEmail = createdByEmail;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getFeedbackComment() {
+        return feedbackComment;
+    }
+
+    public void setFeedbackComment(String feedbackComment) {
+        this.feedbackComment = feedbackComment;
     }
 
 }

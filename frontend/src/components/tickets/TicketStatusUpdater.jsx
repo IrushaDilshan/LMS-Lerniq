@@ -36,13 +36,22 @@ const TicketStatusUpdater = ({ ticketId, currentStatus, currentNote, currentReje
     setError('');
 
     try {
+      // Logic fix: If tech manually sets to IN_PROGRESS, ensure resolutionNote reflects that they've started
+      let finalNote = resolutionNote;
+      if (status === 'IN_PROGRESS' && currentUser.role === 'TECHNICIAN') {
+        finalNote = 'STARTED_BY_TECH';
+      } else if (status !== 'RESOLVED' && status !== 'IN_PROGRESS') {
+        finalNote = null;
+      }
+
       const response = await api.put(`/tickets/${ticketId}/status`, {
         status: status,
-        resolutionNote: status === 'RESOLVED' ? resolutionNote : null,
+        resolutionNote: finalNote,
         rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       });
       if (response.status === 200) {
         onUpdateSuccess(response.data);
+        alert('Ticket status updated successfully.');
       }
     } catch (err) {
       setError('Failed to update ticket status. Please try again.');

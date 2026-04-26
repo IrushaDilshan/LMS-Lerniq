@@ -1,76 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, RefreshCw, ChevronRight, Filter } from 'lucide-react';
+import { 
+  AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, 
+  RefreshCw, ChevronRight, Filter, Star, Search, X,
+  MoreVertical, MoreHorizontal
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
 const STATUS_TABS = [
-  { key: 'ALL',         label: 'All' },
-  { key: 'OPEN',        label: 'Open' },
-  { key: 'IN_PROGRESS', label: 'In Progress' },
-  { key: 'RESOLVED',    label: 'Resolved' },
-  { key: 'CLOSED',      label: 'Closed' },
-  { key: 'REJECTED',    label: 'Rejected' },
+  { key: 'ALL',         label: 'All Missions' },
+  { key: 'OPEN',        label: 'Unassigned' },
+  { key: 'IN_PROGRESS', label: 'Active' },
+  { key: 'RESOLVED',    label: 'Completed' },
+  { key: 'CLOSED',      label: 'Archived' },
+  { key: 'REJECTED',    label: 'Canceled' },
 ];
 
 const StatusBadge = ({ ticket }) => {
   const status = ticket.status;
+  const isTechWorking = status === 'IN_PROGRESS' && ticket.resolutionNote === 'STARTED_BY_TECH';
+  
   const map = {
-    OPEN:        { label: 'Open',        cls: 'bg-amber-100 text-amber-800 border-amber-200 font-black', icon: AlertCircle, pulse: true },
-    IN_PROGRESS: { label: ticket.resolutionNote === 'STARTED_BY_TECH' ? 'Technician Working' : 'Process Started', cls: 'bg-blue-100 text-blue-800 border-blue-200', icon: Clock },
-    RESOLVED:    { label: 'Resolved',    cls: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: CheckCircle },
-    CLOSED:      { label: 'Closed',      cls: 'bg-gray-100 text-gray-600 border-gray-200',          icon: CheckCircle },
-    REJECTED:    { label: 'Rejected',    cls: 'bg-rose-100 text-rose-700 border-rose-200',          icon: AlertCircle },
+    OPEN:        { label: 'OPEN',        cls: 'bg-amber-500/10 text-amber-600 border-amber-200/50', icon: AlertCircle, dot: 'bg-amber-500' },
+    IN_PROGRESS: { label: isTechWorking ? 'TECHNICIAN WORKING' : 'ACTIVE', cls: 'bg-blue-500/10 text-blue-600 border-blue-200/50', icon: Clock, dot: 'bg-blue-500' },
+    RESOLVED:    { label: 'RESOLVED',    cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50', icon: CheckCircle, dot: 'bg-emerald-500' },
+    CLOSED:      { label: 'CLOSED',      cls: 'bg-slate-500/10 text-slate-600 border-slate-200/50', icon: CheckCircle, dot: 'bg-slate-500' },
+    REJECTED:    { label: 'REJECTED',    cls: 'bg-rose-500/10 text-rose-600 border-rose-200/50', icon: AlertCircle, dot: 'bg-rose-500' },
   };
-  const cfg = map[status] || { label: status, cls: 'bg-gray-100 text-gray-700 border-gray-200', icon: AlertCircle };
-  const Icon = cfg.icon;
+  const cfg = map[status] || { label: status, cls: 'bg-gray-100 text-gray-500 border-gray-200', dot: 'bg-gray-400' };
+  
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.cls} relative overflow-hidden`}>
-      {cfg.pulse && <span className="absolute inset-0 bg-amber-400/20 animate-pulse" />}
-      <Icon className={`w-3 h-3 relative z-10 ${cfg.pulse ? 'animate-bounce-subtle' : ''}`} /> 
-      <span className="relative z-10">{cfg.label}</span>
+    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border transition-all ${cfg.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${status === 'OPEN' || status === 'IN_PROGRESS' ? 'animate-pulse' : ''}`} />
+      {cfg.label}
     </span>
   );
 };
 
 const PriorityBadge = ({ priority }) => {
   const map = {
-    LOW:      { label: 'Low',      cls: 'text-green-700 bg-green-50',  dot: 'bg-green-400' },
-    MEDIUM:   { label: 'Medium',   cls: 'text-yellow-700 bg-yellow-50', dot: 'bg-yellow-400' },
-    HIGH:     { label: 'High',     cls: 'text-orange-700 bg-orange-50', dot: 'bg-orange-400' },
-    CRITICAL: { label: 'Critical', cls: 'text-rose-700 bg-rose-50',    dot: 'bg-rose-500' },
+    LOW:      { label: 'LOW',      cls: 'text-gray-500 bg-gray-50',  dot: 'bg-gray-400' },
+    MEDIUM:   { label: 'MEDIUM',   cls: 'text-blue-500 bg-blue-50', dot: 'bg-blue-400' },
+    HIGH:     { label: 'HIGH',     cls: 'text-orange-500 bg-orange-50', dot: 'bg-orange-400' },
+    CRITICAL: { label: 'CRITICAL', cls: 'text-rose-600 bg-rose-50',    dot: 'bg-rose-500' },
   };
-  const cfg = map[priority] || { label: priority, cls: 'text-gray-600 bg-gray-50', dot: 'bg-gray-400' };
+  const cfg = map[priority] || { label: priority, cls: 'text-gray-500 bg-gray-50', dot: 'bg-gray-400' };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black tracking-tighter ${cfg.cls} border border-transparent`}>
+       {cfg.label}
     </span>
   );
 };
 
 const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
   const { currentUser } = useAuth();
-  const [tickets, setTickets] = useState([]);       // currently displayed (filtered)
-  const [allTickets, setAllTickets] = useState([]); // full list for tab counts
+  const [tickets, setTickets] = useState([]);
+  const [allTickets, setAllTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const newTicketIdFromState = location.state?.newTicketId;
-  const effectiveNewTicketId = highlightTicketId || newTicketIdFromState;
+  const effectiveNewTicketId = highlightTicketId || location.state?.newTicketId;
 
-  const isTrulyNew = (createdAt) => {
-    const createdDate = new Date(createdAt);
-    const now = new Date();
-    const diffMs = now - createdDate;
-    const diffHours = diffMs / (1000 * 60 * 60);
-    return diffHours < 24; 
-  };
-
-  // Fetch full list once for tab counts, then fetch filtered list
   useEffect(() => {
     fetchAllForCounts();
     fetchTickets(false, 'ALL');
@@ -85,7 +81,7 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
         ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
         : res.data;
       setAllTickets(filtered);
-    } catch (_) { /* non-critical */ }
+    } catch (_) {}
   };
 
   const fetchTickets = async (silent = false, filter = activeFilter) => {
@@ -97,172 +93,167 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
       if (filter !== 'ALL') params.status = filter;
       
       const res = await api.get('/tickets', { params });
-      
-        const sorted = (filterTechnicianId 
-          ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
-          : res.data).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const sorted = (filterTechnicianId 
+        ? res.data.filter(t => t.assignedTechnicianId === filterTechnicianId) 
+        : res.data).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           
-        setTickets(sorted);
+      setTickets(sorted);
       setError('');
     } catch (err) {
-      setError('Failed to load tickets. Please try again later.');
+      setError('System communication error. Check uplink.');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
   };
 
-  const handleFilterChange = (filterKey) => {
-    setActiveFilter(filterKey);
-    fetchTickets(false, filterKey);
-  };
-
-  const filtered = tickets; // already filtered by backend
+  const filteredTickets = tickets.filter(ticket => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+        ticket.id?.toString().toLowerCase().includes(searchLower) ||
+        ticket.resourceLocation?.toLowerCase().includes(searchLower) ||
+        ticket.description?.toLowerCase().includes(searchLower) ||
+        ticket.category?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-16 flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-[3px] border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-        <p className="text-gray-500 text-sm font-medium">Loading tickets…</p>
+      <div className="p-20 flex flex-col items-center gap-6">
+        <div className="w-12 h-12 border-[3px] border-blue-500/10 border-t-blue-600 rounded-full animate-spin" />
+        <p className="text-gray-400 text-xs font-black uppercase tracking-[0.2em]">Synchronizing Logs...</p>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="bg-rose-50 text-rose-700 p-5 rounded-2xl flex items-start gap-3 border border-rose-100">
-        <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="font-semibold">{error}</p>
-          <button onClick={() => fetchTickets()} className="text-sm underline mt-1 hover:no-underline">Try again</button>
-        </div>
-      </div>
-    );
-  }
-
-  const calculateTimer = (createdAt, updatedAt, status) => {
-    const start = new Date(createdAt);
-    let end = new Date();
-    if (status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
-      end = new Date(updatedAt || createdAt);
-    }
-    
-    const diffMs = end - start;
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (status === 'RESOLVED' || status === 'CLOSED' || status === 'REJECTED') {
-      if (diffDays > 0) return `Ended in ${diffDays}d`;
-      if (diffHours > 0) return `Ended in ${diffHours}h`;
-      return 'Ended in <1h';
-    } else {
-      if (diffDays > 0) return `Open for ${diffDays}d`;
-      if (diffHours > 0) return `Open for ${diffHours}h`;
-      return 'Just opened';
-    }
-  };
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#061224] rounded-xl flex items-center justify-center">
-            <Ticket className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-[#061224]">Recent Tickets</h2>
-            <p className="text-xs text-gray-400">{tickets.length} ticket{tickets.length !== 1 ? 's' : ''} total</p>
-          </div>
+    <div className="bg-white group/list">
+      {/* List Header Toolbar */}
+      <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between gap-6 flex-wrap bg-gray-50/30">
+        <div className="flex items-center gap-5">
+           <div className="flex items-center gap-2">
+             {STATUS_TABS.map(tab => (
+               <button 
+                 key={tab.key} 
+                 onClick={() => { setActiveFilter(tab.key); fetchTickets(false, tab.key); }}
+                 className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border
+                   ${activeFilter === tab.key
+                     ? 'bg-[#061224] border-[#061224] text-white shadow-lg shadow-blue-900/10'
+                     : 'bg-white border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600'}`}
+               >
+                 {tab.label}
+                 <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[9px] ${activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    {tab.key === 'ALL' ? allTickets.length : allTickets.filter(t => t.status === tab.key).length}
+                 </span>
+               </button>
+             ))}
+           </div>
         </div>
-        <button onClick={() => fetchTickets(true)}
-          className={`inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#061224] transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${isRefreshing ? 'opacity-60 pointer-events-none' : ''}`}>
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} /> Refresh
-        </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="px-6 pt-4 pb-0 flex items-center gap-1 flex-wrap border-b border-gray-100">
-        {STATUS_TABS.map(tab => (
-          <button key={tab.key} onClick={() => handleFilterChange(tab.key)}
-            className={`px-4 py-2 text-xs font-bold rounded-t-lg transition-all border-b-2 -mb-px
-              ${activeFilter === tab.key
-                ? 'border-[#061224] text-[#061224] bg-gray-50'
-                : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}>
-            {tab.label}
-            {tab.key !== 'ALL' && (
-              <span className="ml-1.5 bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5 text-[10px]">
-                {allTickets.filter(t => t.status === tab.key).length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Table / Empty State */}
-      <div className="p-6">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Ticket className="w-8 h-8 text-gray-300" />
+        
+        <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 transition-all duration-300 ${isSearchOpen ? 'w-64 opacity-100' : 'w-10 opacity-100'}`}>
+                {isSearchOpen && (
+                    <input 
+                        autoFocus
+                        type="text"
+                        placeholder="Search Intel..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                )}
+                <button 
+                    onClick={() => {
+                        if (isSearchOpen) setSearchTerm('');
+                        setIsSearchOpen(!isSearchOpen);
+                    }}
+                    className={`p-2.5 rounded-xl transition-all ${isSearchOpen ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white border border-gray-200 text-gray-400 hover:text-blue-600'}`}
+                >
+                    {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                </button>
             </div>
-            <p className="text-lg font-bold text-gray-600">No tickets found</p>
-            <p className="text-sm text-gray-400 mt-1">
-              {activeFilter === 'ALL' ? "You haven't reported any incidents yet." : `No ${activeFilter.replace('_', ' ').toLowerCase()} tickets.`}
-            </p>
+
+            <button 
+                onClick={() => { fetchTickets(true); fetchAllForCounts(); }} 
+                className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-blue-600 transition-all hover:rotate-180 duration-500"
+                title="Synchronize Database"
+            >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-8">
+        {filteredTickets.length === 0 ? (
+          <div className="text-center py-20 flex flex-col items-center">
+            <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-6 border border-dashed border-gray-200">
+              <Search className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-lg font-black text-gray-900 tracking-tight">No Matching Records</p>
+            <p className="text-sm text-gray-400 font-medium mt-1">Adjust filters or standby for new reports.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-6 px-6">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-separate border-spacing-y-3 mt-[-12px]">
               <thead>
-                <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="pb-3 pr-4">ID</th>
-                  <th className="pb-3 px-4">Location / Description</th>
-                  <th className="pb-3 px-4">Category</th>
-                  <th className="pb-3 px-4">Priority</th>
-                  <th className="pb-3 px-4">Status</th>
-                  <th className="pb-3 pl-4 text-right">Date</th>
-                  <th className="pb-3 pl-2"></th>
+                <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                  <th className="pb-4 pl-6">Mission ID</th>
+                  <th className="pb-4 px-4">Location / Intel</th>
+                  <th className="pb-4 px-4">Category</th>
+                  <th className="pb-4 px-4">Priority</th>
+                  <th className="pb-4 px-4">Status</th>
+                  <th className="pb-4 px-4">Response Time</th>
+                  <th className="pb-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.map((ticket) => (
-                  <tr key={ticket.id} onClick={() => navigate(`/tickets/${ticket.id}`)}
-                    className={`group hover:bg-gray-50/80 transition-all cursor-pointer rounded-xl relative border-l-4 ${
-                      ticket.id === effectiveNewTicketId ? 'border-blue-500 bg-blue-50/50 shadow-[0_0_15px_rgba(59,130,246,0.1)]' :
-                      (ticket.status === 'OPEN' && isTrulyNew(ticket.createdAt)) ? 'border-amber-400 bg-amber-50/20 shadow-[inset_1px_0_0_rgba(251,191,36,0.3)]' : 
-                      ticket.status === 'OPEN' ? 'border-amber-200 bg-amber-50/5' :
-                      ticket.status === 'IN_PROGRESS' ? 'border-blue-400' :
-                      'border-transparent'
-                    }`}>
-                    <td className="py-5 pr-4 pl-4 text-sm font-bold text-gray-400 group-hover:text-blue-600 transition-colors whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span>#{ticket.id}</span>
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr 
+                    key={ticket.id} 
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                    className={`group hover:bg-blue-50/80 transition-all cursor-pointer rounded-[1.5rem] relative
+                      ${ticket.id === effectiveNewTicketId ? 'bg-blue-100/50 ring-2 ring-blue-500 ring-offset-2' : 'bg-white border border-gray-100 shadow-sm'}`}
+                  >
+                    <td className="py-6 pl-6 rounded-l-[1.5rem] border-y border-l border-transparent group-hover:border-blue-200/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-xs font-black text-gray-400 group-hover:text-blue-600 transition-colors">#{ticket.id}</span>
                         {ticket.id === effectiveNewTicketId && (
-                           <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-widest font-black animate-bounce shadow-md">JUST SUBMITTED</span>
-                        )}
-                        {ticket.status === 'OPEN' && isTrulyNew(ticket.createdAt) && ticket.id !== effectiveNewTicketId && (
-                          <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-tighter animate-pulse shadow-sm font-black">NEW</span>
+                           <span className="bg-blue-600 text-white text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black animate-pulse">NEW</span>
                         )}
                       </div>
                     </td>
-                    <td className="py-5 px-4 max-w-[220px]">
-                      <p className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">{ticket.resourceLocation}</p>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">{ticket.description}</p>
-                    </td>
-                    <td className="py-5 px-4 text-sm text-gray-600 whitespace-nowrap font-medium">{ticket.category}</td>
-                    <td className="py-5 px-4"><PriorityBadge priority={ticket.priority} /></td>
-                    <td className="py-5 px-4"><StatusBadge ticket={ticket} /></td>
-                    <td className="py-5 pl-4 text-right whitespace-nowrap pr-2">
-                      <div className="text-xs text-gray-800 font-bold">
-                        {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </div>
-                      <div className={`text-[11px] mt-0.5 font-medium ${ticket.status === 'OPEN' ? 'text-amber-600' : 'text-gray-400'}`}>
-                        {calculateTimer(ticket.createdAt, ticket.updatedAt, ticket.status)}
+                    <td className="py-6 px-4">
+                      <div className="max-w-[280px]">
+                        <p className="font-black text-gray-900 text-sm group-hover:text-blue-900 transition-colors">{ticket.resourceLocation}</p>
+                        <p className="text-xs text-gray-500 font-medium truncate mt-1">{ticket.description}</p>
                       </div>
                     </td>
-                    <td className="py-4 pl-2 pr-1">
-                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    <td className="py-6 px-4">
+                        <span className="text-xs font-extrabold text-gray-600">{ticket.category}</span>
+                    </td>
+                    <td className="py-6 px-4">
+                        <PriorityBadge priority={ticket.priority} />
+                    </td>
+                    <td className="py-6 px-4">
+                        <StatusBadge ticket={ticket} />
+                    </td>
+                    <td className="py-6 px-4">
+                        <div className="flex flex-col">
+                            <span className="text-xs font-black text-gray-900">
+                                {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-400 mt-0.5">
+                                {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    </td>
+                    <td className="py-6 pr-6 text-right rounded-r-[1.5rem] border-y border-r border-transparent group-hover:border-blue-200/50">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-blue-100 transition-all">
+                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -276,3 +267,4 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
 };
 
 export default TicketList;
+

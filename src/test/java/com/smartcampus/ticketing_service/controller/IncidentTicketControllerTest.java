@@ -19,9 +19,12 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import com.smartcampus.ticketing_service.exception.GlobalExceptionHandler;
 
@@ -31,6 +34,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @ExtendWith(MockitoExtension.class)
 public class IncidentTicketControllerTest {
@@ -51,11 +55,12 @@ public class IncidentTicketControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(ticketController)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
                 .build();
 
         mockResponse = new TicketResponse();
 
-        mockResponse.setId(1L);
+        mockResponse.setId("1");
         mockResponse.setResourceLocation("Library");
         mockResponse.setCategory("HARDWARE");
         mockResponse.setDescription("Screen broken");
@@ -70,15 +75,27 @@ public class IncidentTicketControllerTest {
         when(ticketService.createTicket(any(TicketCreateRequest.class), any())).thenReturn(mockResponse);
 
         MockMultipartFile file = new MockMultipartFile("files", "test.jpg", "image/jpeg", "image data".getBytes());
-        MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", 
-            ("{\"resourceLocation\":\"Library\", \"category\":\"HARDWARE\", \"description\":\"Screen broken\", \"priority\":\"MEDIUM\", \"preferredContactDetails\":\"12345\", \"createdByUserId\":4}").getBytes());
+        
+        TicketCreateRequest request = new TicketCreateRequest();
+        request.setResourceLocation("Library");
+        request.setCategory("HARDWARE");
+        request.setDescription("Screen broken");
+        request.setPriority(TicketPriority.MEDIUM);
+        request.setPreferredContactDetails("12345");
+        request.setContactEmail("test@example.com");
+        request.setContactPhone("0123456789");
+        request.setCreatedByUserId(4L);
 
-        mockMvc.perform(multipart("/api/v1/tickets")
-                .file(file)
-                .file(ticketPart)
-                .contentType(MediaType.MULTIPART_FORM_DATA))
+        byte[] ticketJson = objectMapper.writeValueAsBytes(request);
+        MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", ticketJson);
+        
+        MockMultipartHttpServletRequestBuilder requestBuilder = multipart("/api/v1/tickets");
+        requestBuilder.file(file);
+        requestBuilder.file(ticketPart);
+
+        mockMvc.perform(requestBuilder)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.resourceLocation").value("Library"));
     }
 
@@ -90,22 +107,22 @@ public class IncidentTicketControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1));
+                .andExpect(jsonPath("$[0].id").value("1"));
     }
 
     @Test
     void getTicketById_ReturnsOk() throws Exception {
-        when(ticketService.getTicketById(1L)).thenReturn(mockResponse);
+        when(ticketService.getTicketById("1")).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/v1/tickets/1")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1));
+                .andExpect(jsonPath("$.id").value("1"));
     }
 
     @Test
     void getTicketById_NotFound_Returns404() throws Exception {
-        when(ticketService.getTicketById(99L)).thenThrow(new ResourceNotFoundException("Not found with id: 99"));
+        when(ticketService.getTicketById("99")).thenThrow(new ResourceNotFoundException("Not found with id: 99"));
 
         mockMvc.perform(get("/api/v1/tickets/99")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -120,10 +137,10 @@ public class IncidentTicketControllerTest {
         updateRequest.setStatus(TicketStatus.IN_PROGRESS);
 
         TicketResponse updatedResponse = new TicketResponse();
-        updatedResponse.setId(1L);
+        updatedResponse.setId("1");
         updatedResponse.setStatus(TicketStatus.IN_PROGRESS);
 
-        when(ticketService.updateTicketStatus(eq(1L), any(TicketStatusUpdateRequest.class))).thenReturn(updatedResponse);
+        when(ticketService.updateTicketStatus(eq("1"), any(TicketStatusUpdateRequest.class))).thenReturn(updatedResponse);
 
         mockMvc.perform(put("/api/v1/tickets/1/status")
                 .contentType(MediaType.APPLICATION_JSON)
