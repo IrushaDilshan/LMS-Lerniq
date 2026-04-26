@@ -48,9 +48,13 @@ public class ResourceBookingService {
     public List<BookingResponse> getBookings(Long requestingUserId, String requestingRole, BookingStatus status, String resourceName, LocalDate bookingDate) {
         validateAccessInputs(requestingUserId, requestingRole);
 
-        List<ResourceBooking> bookings = isAdmin(requestingRole)
-                ? bookingRepository.findAll()
-                : bookingRepository.findByRequestedByUserId(requestingUserId);
+        List<ResourceBooking> bookings;
+
+        if (isAdmin(requestingRole)) {
+            bookings = bookingRepository.findAll();
+        } else {
+            bookings = bookingRepository.findByRequestedByUserId(requestingUserId);
+        }
 
         List<BookingResponse> filtered = new ArrayList<>();
         for (ResourceBooking booking : bookings) {
@@ -85,7 +89,7 @@ public class ResourceBookingService {
         }
 
         ResourceBooking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING bookings can be reviewed.");
@@ -107,7 +111,7 @@ public class ResourceBookingService {
         validateAccessInputs(requestingUserId, requestingRole);
 
         ResourceBooking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         boolean isRequester = booking.getRequestedByUserId() != null && booking.getRequestedByUserId().equals(requestingUserId);
         if (!isAdmin(requestingRole) && !isRequester) {
@@ -128,7 +132,7 @@ public class ResourceBookingService {
 
     private void ensureNoConflict(String resourceName, LocalDate date, LocalTime startTime, LocalTime endTime, String currentBookingId) {
         List<ResourceBooking> sameResourceBookings = bookingRepository
-                .findByResourceNameIgnoreCaseAndBookingDateAndStatusIn(resourceName.trim(), date, CONFLICT_STATES);
+            .findByResourceNameIgnoreCaseAndBookingDateAndStatusIn(resourceName.trim(), date, CONFLICT_STATES);
 
         for (ResourceBooking existing : sameResourceBookings) {
             if (currentBookingId != null && currentBookingId.equals(existing.getId())) {
