@@ -1,8 +1,10 @@
 package com.smartcampus.ticketing_service.dto;
 
 import com.smartcampus.ticketing_service.model.TicketPriority;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 public class TicketUpdateRequest {
@@ -19,6 +21,11 @@ public class TicketUpdateRequest {
     private TicketPriority priority;
 
     private String preferredContactDetails;
+    @Email(message = "Invalid email format")
+    private String contactEmail;
+
+    @Pattern(regexp = "^\\d{10}$", message = "Phone number must be 10 digits")
+    private String contactPhone;
 
     public String getResourceLocation() { return resourceLocation; }
     public void setResourceLocation(String resourceLocation) { this.resourceLocation = resourceLocation; }
@@ -30,4 +37,8 @@ public class TicketUpdateRequest {
     public void setPriority(TicketPriority priority) { this.priority = priority; }
     public String getPreferredContactDetails() { return preferredContactDetails; }
     public void setPreferredContactDetails(String preferredContactDetails) { this.preferredContactDetails = preferredContactDetails; }
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
 }

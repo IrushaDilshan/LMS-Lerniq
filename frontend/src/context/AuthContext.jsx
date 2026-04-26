@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 
 const AuthContext = createContext();
 
@@ -8,7 +8,18 @@ export const AuthProvider = ({ children }) => {
   // We mock a logged in user state. In a real app, this would come from a login API / JWT.
   // Available roles: 'USER', 'ADMIN', 'TECHNICIAN'
   
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('uniops_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('uniops_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('uniops_user');
+    }
+  }, [currentUser]);
 
   const logout = useCallback(() => {
     setCurrentUser(null);

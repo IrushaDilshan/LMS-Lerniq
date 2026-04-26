@@ -37,9 +37,9 @@ public class IncidentTicketController {
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         try {
             TicketResponse created = ticketService.createTicket(request, files);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
+            return new ResponseEntity<>(created, HttpStatus.CREATED); //201 Sucessfully created resource
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); //400Bad Request
         }
     }
 

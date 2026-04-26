@@ -314,8 +314,12 @@ const TicketDetailView = () => {
                  <p className="font-bold">USER-{ticket.createdByUserId}</p>
                </div>
                <div>
-                 <p className="text-gray-400 font-medium">Preferred Contact</p>
-                 <p className="font-bold">{ticket.preferredContactDetails}</p>
+                 <p className="text-gray-400 font-medium">Contact Email</p>
+                 <p className="font-bold">{ticket.contactEmail || 'Not Provided'}</p>
+               </div>
+               <div>
+                 <p className="text-gray-400 font-medium">Phone Number</p>
+                 <p className="font-bold">{ticket.contactPhone || 'Not Provided'}</p>
                </div>
              </div>
           </div>

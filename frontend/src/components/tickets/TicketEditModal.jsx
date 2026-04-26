@@ -10,10 +10,12 @@ const TicketEditModal = ({ ticket, isOpen, onClose, onUpdateSuccess }) => {
     category: ticket.category,
     description: ticket.description,
     priority: ticket.priority,
-    preferredContactDetails: ticket.preferredContactDetails || '',
+    contactEmail: ticket.contactEmail || '',
+    contactPhone: ticket.contactPhone || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   if (!isOpen) return null;
 
@@ -26,6 +28,23 @@ const TicketEditModal = ({ ticket, isOpen, onClose, onUpdateSuccess }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    const errors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!emailRegex.test(formData.contactEmail)) {
+      errors.contactEmail = 'Invalid email format.';
+    }
+    if (!phoneRegex.test(formData.contactPhone)) {
+      errors.contactPhone = 'Phone number must be 10 digits.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
+    setFieldErrors({});
 
     try {
       const response = await api.put(`/tickets/${ticket.id}?requestingUserId=${currentUser.id}`, formData);
@@ -111,15 +130,31 @@ const TicketEditModal = ({ ticket, isOpen, onClose, onUpdateSuccess }) => {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Contact Details</label>
-            <input 
-              type="text" 
-              name="preferredContactDetails" 
-              value={formData.preferredContactDetails} 
-              onChange={handleInputChange}
-              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Contact Email</label>
+              <input 
+                type="email" 
+                name="contactEmail" 
+                value={formData.contactEmail} 
+                onChange={handleInputChange}
+                required
+                className={`w-full bg-gray-50 border ${fieldErrors.contactEmail ? 'border-rose-400 focus:ring-rose-200' : 'border-gray-100'} rounded-2xl px-5 py-3.5 text-sm focus:ring-4 outline-none transition-all font-medium`}
+              />
+              {fieldErrors.contactEmail && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.contactEmail}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Phone Number</label>
+              <input 
+                type="tel" 
+                name="contactPhone" 
+                value={formData.contactPhone} 
+                onChange={handleInputChange}
+                required
+                className={`w-full bg-gray-50 border ${fieldErrors.contactPhone ? 'border-rose-400 focus:ring-rose-200' : 'border-gray-100'} rounded-2xl px-5 py-3.5 text-sm focus:ring-4 outline-none transition-all font-medium`}
+              />
+              {fieldErrors.contactPhone && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.contactPhone}</p>}
+            </div>
           </div>
 
           <div className="space-y-1.5">
