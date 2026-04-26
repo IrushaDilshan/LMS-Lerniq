@@ -3,6 +3,7 @@ package com.smartcampus.ticketing_service.controller;
 import com.smartcampus.ticketing_service.dto.BookingCreateRequest;
 import com.smartcampus.ticketing_service.dto.BookingResponse;
 import com.smartcampus.ticketing_service.dto.BookingReviewRequest;
+import com.smartcampus.ticketing_service.dto.RepeatBookingRequest;
 import com.smartcampus.ticketing_service.model.BookingStatus;
 import com.smartcampus.ticketing_service.service.ResourceBookingService;
 import jakarta.validation.Valid;
@@ -55,5 +56,16 @@ public class ResourceBookingController {
             @RequestParam String requestingRole,
             @RequestParam(required = false) String reason) {
         return ResponseEntity.ok(bookingService.cancelBooking(bookingId, requestingUserId, requestingRole, reason));
+    }
+
+    @PostMapping("/repeat")
+    public ResponseEntity<List<BookingResponse>> repeatBooking(
+            @RequestParam Long requestingUserId,
+            @RequestParam String requestingRole,
+            @Valid @RequestBody RepeatBookingRequest request) {
+        return new ResponseEntity<>(
+                bookingService.repeatBooking(requestingUserId, requestingRole, request),
+                HttpStatus.CREATED
+        );
     }
 }

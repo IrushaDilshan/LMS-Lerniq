@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock3, Filter, PlusCircle, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock3, Filter, PlusCircle, Repeat, XCircle } from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -134,6 +134,56 @@ function BookingsPage() {
       await loadBookings();
     } catch (err) {
       const message = err?.response?.data?.message || 'Failed to cancel booking.';
+      setError(message);
+    }
+  };
+
+  const handleRepeatBooking = async (booking) => {
+    setError('');
+
+    const occurrencesRaw = window.prompt('How many times do you want to repeat this booking?', '3');
+    if (occurrencesRaw === null) {
+      return;
+    }
+
+    const occurrences = Number(occurrencesRaw);
+    if (!Number.isInteger(occurrences) || occurrences < 1 || occurrences > 30) {
+      setError('Occurrences must be a whole number between 1 and 30.');
+      return;
+    }
+
+    const recurrenceRaw = window.prompt('Repeat type? Enter DAILY or WEEKLY', 'WEEKLY');
+    if (recurrenceRaw === null) {
+      return;
+    }
+
+    const recurrenceType = recurrenceRaw.trim().toUpperCase();
+    if (recurrenceType !== 'DAILY' && recurrenceType !== 'WEEKLY') {
+      setError('Repeat type must be DAILY or WEEKLY.');
+      return;
+    }
+
+    try {
+      const response = await api.post(
+        '/bookings/repeat',
+        {
+          sourceBookingId: booking.id,
+          recurrenceType,
+          occurrences,
+        },
+        {
+          params: {
+            requestingUserId: currentUser.id,
+            requestingRole: currentUser.role,
+          },
+        }
+      );
+
+      const createdCount = Array.isArray(response.data) ? response.data.length : 0;
+      window.alert(`Created ${createdCount} repeated booking(s).`);
+      await loadBookings();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to repeat booking.';
       setError(message);
     }
   };
@@ -354,6 +404,7 @@ function BookingsPage() {
               <tbody>
                 {sortedBookings.map((booking) => {
                   const canCancel = booking.status === 'APPROVED' && (isAdmin || booking.requestedByUserId === currentUser.id);
+                  const canRepeat = isAdmin || booking.requestedByUserId === currentUser.id;
 
                   return (
                     <tr key={booking.id} className="border-b border-gray-50 align-top">
@@ -368,18 +419,29 @@ function BookingsPage() {
                       </td>
                       <td className="py-3 pr-3 text-gray-600 max-w-[280px]">{booking.adminDecisionReason || '-'}</td>
                       <td className="py-3 pr-3">
-                        {canCancel ? (
-                          <button
-                            type="button"
-                            onClick={() => handleCancelBooking(booking.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            Cancel
-                          </button>
-                        ) : (
-                          '-'
-                        )}
+                        <div className="flex items-center gap-2">
+                          {canRepeat && (
+                            <button
+                              type="button"
+                              onClick={() => handleRepeatBooking(booking)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold"
+                            >
+                              <Repeat className="w-3.5 h-3.5" />
+                              Repeat Booking
+                            </button>
+                          )}
+                          {canCancel && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelBooking(booking.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Cancel
+                            </button>
+                          )}
+                          {!canRepeat && !canCancel && '-'}
+                        </div>
                       </td>
                     </tr>
                   );

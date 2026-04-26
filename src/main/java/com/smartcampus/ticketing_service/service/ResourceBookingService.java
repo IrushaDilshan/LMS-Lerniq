@@ -3,9 +3,11 @@ package com.smartcampus.ticketing_service.service;
 import com.smartcampus.ticketing_service.dto.BookingCreateRequest;
 import com.smartcampus.ticketing_service.dto.BookingResponse;
 import com.smartcampus.ticketing_service.dto.BookingReviewRequest;
+import com.smartcampus.ticketing_service.dto.RepeatBookingRequest;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
 import com.smartcampus.ticketing_service.exception.UnauthorizedException;
 import com.smartcampus.ticketing_service.model.BookingStatus;
+import com.smartcampus.ticketing_service.model.RecurrenceType;
 import com.smartcampus.ticketing_service.model.ResourceBooking;
 import com.smartcampus.ticketing_service.repository.ResourceBookingRepository;
 import org.springframework.stereotype.Service;
@@ -128,6 +130,45 @@ public class ResourceBookingService {
         }
 
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    public List<BookingResponse> repeatBooking(Long requestingUserId, String requestingRole, RepeatBookingRequest request) {
+        validateAccessInputs(requestingUserId, requestingRole);
+
+        ResourceBooking sourceBooking = bookingRepository.findById(request.getSourceBookingId())
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + request.getSourceBookingId()));
+
+        boolean isOwner = sourceBooking.getRequestedByUserId() != null && sourceBooking.getRequestedByUserId().equals(requestingUserId);
+        if (!isAdmin(requestingRole) && !isOwner) {
+            throw new UnauthorizedException("Only booking owner or ADMIN can repeat this booking.");
+        }
+
+        if (sourceBooking.getStatus() == BookingStatus.CANCELLED || sourceBooking.getStatus() == BookingStatus.REJECTED) {
+            throw new IllegalArgumentException("Only PENDING or APPROVED bookings can be repeated.");
+        }
+
+        int dayStep = request.getRecurrenceType() == RecurrenceType.DAILY ? 1 : 7;
+        List<ResourceBooking> toSave = new ArrayList<>();
+
+        for (int i = 1; i <= request.getOccurrences(); i++) {
+            LocalDate repeatedDate = sourceBooking.getBookingDate().plusDays((long) i * dayStep);
+            ensureNoConflict(sourceBooking.getResourceName(), repeatedDate, sourceBooking.getStartTime(), sourceBooking.getEndTime(), null);
+
+            ResourceBooking repeated = new ResourceBooking();
+            repeated.setResourceName(sourceBooking.getResourceName());
+            repeated.setBookingDate(repeatedDate);
+            repeated.setStartTime(sourceBooking.getStartTime());
+            repeated.setEndTime(sourceBooking.getEndTime());
+            repeated.setPurpose(sourceBooking.getPurpose());
+            repeated.setExpectedAttendees(sourceBooking.getExpectedAttendees());
+            repeated.setRequestedByUserId(sourceBooking.getRequestedByUserId());
+            repeated.setRequestedByUserName(sourceBooking.getRequestedByUserName());
+            repeated.setStatus(BookingStatus.PENDING);
+            toSave.add(repeated);
+        }
+
+        List<ResourceBooking> saved = bookingRepository.saveAll(toSave);
+        return saved.stream().map(this::mapToResponse).toList();
     }
 
     private void ensureNoConflict(String resourceName, LocalDate date, LocalTime startTime, LocalTime endTime, String currentBookingId) {
