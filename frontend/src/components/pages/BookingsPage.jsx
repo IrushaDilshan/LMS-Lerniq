@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock3, Filter, PlusCircle, Repeat, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock3, Filter, Pencil, PlusCircle, Repeat, Trash2, XCircle } from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -57,6 +57,16 @@ function BookingsPage() {
     startDate: '',
     dayOfWeek: 'MONDAY',
     dayOfMonth: 1,
+  });
+
+  const [editModalBooking, setEditModalBooking] = useState(null);
+  const [editForm, setEditForm] = useState({
+    resourceName: RESOURCE_OPTIONS[0],
+    bookingDate: '',
+    startTime: '',
+    endTime: '',
+    purpose: '',
+    expectedAttendees: 1,
   });
 
   const sortedBookings = useMemo(() => {
@@ -146,6 +156,73 @@ function BookingsPage() {
       await loadBookings();
     } catch (err) {
       const message = err?.response?.data?.message || 'Failed to cancel booking.';
+      setError(message);
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this booking?');
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+    try {
+      await api.delete(`/bookings/${bookingId}`, {
+        params: {
+          requestingUserId: currentUser.id,
+          requestingRole: currentUser.role,
+        },
+      });
+      await loadBookings();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to delete booking.';
+      setError(message);
+    }
+  };
+
+  const openEditModal = (booking) => {
+    setEditForm({
+      resourceName: booking.resourceName || RESOURCE_OPTIONS[0],
+      bookingDate: booking.bookingDate || '',
+      startTime: booking.startTime || '',
+      endTime: booking.endTime || '',
+      purpose: booking.purpose || '',
+      expectedAttendees: booking.expectedAttendees || 1,
+    });
+    setEditModalBooking(booking);
+  };
+
+  const closeEditModal = () => {
+    setEditModalBooking(null);
+  };
+
+  const handleSubmitEditBooking = async (event) => {
+    event.preventDefault();
+    if (!editModalBooking) {
+      return;
+    }
+
+    setError('');
+    try {
+      await api.put(
+        `/bookings/${editModalBooking.id}`,
+        {
+          ...editForm,
+          expectedAttendees: Number(editForm.expectedAttendees),
+        },
+        {
+          params: {
+            requestingUserId: currentUser.id,
+            requestingRole: currentUser.role,
+          },
+        }
+      );
+
+      closeEditModal();
+      await loadBookings();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to update booking.';
       setError(message);
     }
   };
@@ -445,8 +522,11 @@ function BookingsPage() {
               </thead>
               <tbody>
                 {sortedBookings.map((booking) => {
+                  const isOwner = booking.requestedByUserId === currentUser.id;
                   const canCancel = booking.status === 'APPROVED' && (isAdmin || booking.requestedByUserId === currentUser.id);
-                  const canRepeat = isAdmin || booking.requestedByUserId === currentUser.id;
+                  const canRepeat = isAdmin || isOwner;
+                  const canDelete = isAdmin || isOwner;
+                  const canEdit = booking.status === 'PENDING' && (isAdmin || isOwner);
 
                   return (
                     <tr key={booking.id} className="border-b border-gray-50 align-top">
@@ -462,6 +542,26 @@ function BookingsPage() {
                       <td className="py-3 pr-3 text-gray-600 max-w-[280px]">{booking.adminDecisionReason || '-'}</td>
                       <td className="py-3 pr-3">
                         <div className="flex items-center gap-2">
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(booking)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBooking(booking.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          )}
                           {canRepeat && (
                             <button
                               type="button"
@@ -482,7 +582,7 @@ function BookingsPage() {
                               Cancel
                             </button>
                           )}
-                          {!canRepeat && !canCancel && '-'}
+                          {!canRepeat && !canCancel && !canDelete && !canEdit && '-'}
                         </div>
                       </td>
                     </tr>
@@ -595,6 +695,114 @@ function BookingsPage() {
                 >
                   <Repeat className="w-4 h-4" />
                   Create Repeated Bookings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editModalBooking && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xl font-black text-gray-900">Edit Booking</h3>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-bold"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitEditBooking} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Resource
+                <select
+                  value={editForm.resourceName}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, resourceName: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 bg-white"
+                  required
+                >
+                  {RESOURCE_OPTIONS.map((resource) => (
+                    <option key={resource} value={resource}>
+                      {resource}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Date
+                <input
+                  type="date"
+                  value={editForm.bookingDate}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, bookingDate: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Start Time
+                <input
+                  type="time"
+                  value={editForm.startTime}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                End Time
+                <input
+                  type="time"
+                  value={editForm.endTime}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700 md:col-span-2">
+                Purpose
+                <input
+                  type="text"
+                  value={editForm.purpose}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, purpose: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Expected Attendees
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.expectedAttendees}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, expectedAttendees: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <div className="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Save Changes
                 </button>
               </div>
             </form>

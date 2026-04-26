@@ -3,6 +3,7 @@ package com.smartcampus.ticketing_service.service;
 import com.smartcampus.ticketing_service.dto.BookingCreateRequest;
 import com.smartcampus.ticketing_service.dto.BookingResponse;
 import com.smartcampus.ticketing_service.dto.BookingReviewRequest;
+import com.smartcampus.ticketing_service.dto.BookingUpdateRequest;
 import com.smartcampus.ticketing_service.dto.RepeatBookingRequest;
 import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
 import com.smartcampus.ticketing_service.exception.UnauthorizedException;
@@ -132,6 +133,54 @@ public class ResourceBookingService {
         }
 
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    public BookingResponse updateBooking(String bookingId, Long requestingUserId, String requestingRole, BookingUpdateRequest request) {
+        validateAccessInputs(requestingUserId, requestingRole);
+        validateTimeRange(request.getStartTime(), request.getEndTime());
+
+        ResourceBooking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        boolean isRequester = booking.getRequestedByUserId() != null && booking.getRequestedByUserId().equals(requestingUserId);
+        if (!isAdmin(requestingRole) && !isRequester) {
+            throw new UnauthorizedException("Only booking owner or ADMIN can edit this booking.");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING bookings can be edited.");
+        }
+
+        ensureNoConflict(
+                request.getResourceName(),
+                request.getBookingDate(),
+                request.getStartTime(),
+                request.getEndTime(),
+                booking.getId()
+        );
+
+        booking.setResourceName(request.getResourceName().trim());
+        booking.setBookingDate(request.getBookingDate());
+        booking.setStartTime(request.getStartTime());
+        booking.setEndTime(request.getEndTime());
+        booking.setPurpose(request.getPurpose().trim());
+        booking.setExpectedAttendees(request.getExpectedAttendees());
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    public void deleteBooking(String bookingId, Long requestingUserId, String requestingRole) {
+        validateAccessInputs(requestingUserId, requestingRole);
+
+        ResourceBooking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        boolean isRequester = booking.getRequestedByUserId() != null && booking.getRequestedByUserId().equals(requestingUserId);
+        if (!isAdmin(requestingRole) && !isRequester) {
+            throw new UnauthorizedException("Only booking owner or ADMIN can delete this booking.");
+        }
+
+        bookingRepository.delete(booking);
     }
 
     public List<BookingResponse> repeatBooking(Long requestingUserId, String requestingRole, RepeatBookingRequest request) {
