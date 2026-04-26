@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ResourceRepository extends MongoRepository<Resource, String> {
@@ -34,6 +35,11 @@ public interface ResourceRepository extends MongoRepository<Resource, String> {
      * Find resources by name (case-insensitive, containing)
      */
     List<Resource> findByNameIgnoreCaseContaining(String name);
+
+    /**
+     * Find one resource by exact name (case-insensitive)
+     */
+    Optional<Resource> findFirstByNameIgnoreCase(String name);
     
     /**
      * Find resources by type and status

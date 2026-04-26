@@ -10,14 +10,6 @@ const STATUS_COLORS = {
   CANCELLED: 'bg-slate-200 text-slate-700',
 };
 
-const RESOURCE_OPTIONS = [
-  'Lecture Hall A1',
-  'Conference Room B2',
-  'Computer Lab C3',
-  'Seminar Room D4',
-  'Innovation Hub E5',
-];
-
 const RECURRENCE_OPTIONS = ['DAILY', 'WEEKLY', 'MONTHLY'];
 const DAY_OF_WEEK_OPTIONS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
@@ -28,9 +20,11 @@ function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resourceOptions, setResourceOptions] = useState([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
 
   const [form, setForm] = useState({
-    resourceName: RESOURCE_OPTIONS[0],
+    resourceName: '',
     bookingDate: '',
     startTime: '',
     endTime: '',
@@ -61,7 +55,7 @@ function BookingsPage() {
 
   const [editModalBooking, setEditModalBooking] = useState(null);
   const [editForm, setEditForm] = useState({
-    resourceName: RESOURCE_OPTIONS[0],
+    resourceName: '',
     bookingDate: '',
     startTime: '',
     endTime: '',
@@ -76,6 +70,45 @@ function BookingsPage() {
       return db - da;
     });
   }, [bookings]);
+
+  const firstAvailableResource = resourceOptions[0] || '';
+
+  const editResourceOptions = useMemo(() => {
+    if (!editModalBooking?.resourceName) {
+      return resourceOptions;
+    }
+    if (resourceOptions.includes(editModalBooking.resourceName)) {
+      return resourceOptions;
+    }
+    return [editModalBooking.resourceName, ...resourceOptions];
+  }, [resourceOptions, editModalBooking]);
+
+  const loadResources = async () => {
+    if (!currentUser) {
+      return;
+    }
+
+    setResourcesLoading(true);
+    try {
+      const response = await fetch('/api/resources?activeOnly=true');
+      if (!response.ok) {
+        throw new Error('Failed to load resources.');
+      }
+
+      const data = await response.json();
+      const names = Array.isArray(data)
+        ? [...new Set(data.map((resource) => resource?.name).filter((name) => typeof name === 'string' && name.trim()))]
+        : [];
+
+      setResourceOptions(names);
+    } catch (err) {
+      const message = err?.message || 'Failed to load resources.';
+      setError(message);
+      setResourceOptions([]);
+    } finally {
+      setResourcesLoading(false);
+    }
+  };
 
   const loadBookings = async () => {
     if (!currentUser) {
@@ -111,6 +144,25 @@ function BookingsPage() {
   };
 
   useEffect(() => {
+    loadResources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (resourceOptions.length === 0) {
+      setForm((prev) => ({ ...prev, resourceName: '' }));
+      return;
+    }
+
+    setForm((prev) => {
+      if (prev.resourceName && resourceOptions.includes(prev.resourceName)) {
+        return prev;
+      }
+      return { ...prev, resourceName: resourceOptions[0] };
+    });
+  }, [resourceOptions]);
+
+  useEffect(() => {
     loadBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, filters.status, filters.bookingDate]);
@@ -118,6 +170,11 @@ function BookingsPage() {
   const handleSubmitBooking = async (event) => {
     event.preventDefault();
     setError('');
+
+    if (!form.resourceName) {
+      setError('No active resources are available. Add and activate resources first.');
+      return;
+    }
 
     try {
       await api.post('/bookings', {
@@ -128,7 +185,7 @@ function BookingsPage() {
       });
 
       setForm({
-        resourceName: RESOURCE_OPTIONS[0],
+        resourceName: firstAvailableResource,
         bookingDate: '',
         startTime: '',
         endTime: '',
@@ -183,7 +240,7 @@ function BookingsPage() {
 
   const openEditModal = (booking) => {
     setEditForm({
-      resourceName: booking.resourceName || RESOURCE_OPTIONS[0],
+      resourceName: booking.resourceName || firstAvailableResource,
       bookingDate: booking.bookingDate || '',
       startTime: booking.startTime || '',
       endTime: booking.endTime || '',
@@ -362,6 +419,12 @@ function BookingsPage() {
         </div>
       )}
 
+      {!resourcesLoading && resourceOptions.length === 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 px-4 py-3 text-sm font-semibold">
+          No active resources found. Add resources in the Resources tab and set them to ACTIVE to enable booking.
+        </div>
+      )}
+
       <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-5">
           <PlusCircle className="w-5 h-5 text-blue-600" />
@@ -375,9 +438,10 @@ function BookingsPage() {
               value={form.resourceName}
               onChange={(e) => setForm((prev) => ({ ...prev, resourceName: e.target.value }))}
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 bg-white"
+              disabled={resourcesLoading || resourceOptions.length === 0}
               required
             >
-              {RESOURCE_OPTIONS.map((resource) => (
+              {resourceOptions.map((resource) => (
                 <option key={resource} value={resource}>
                   {resource}
                 </option>
@@ -445,10 +509,11 @@ function BookingsPage() {
           <div className="md:col-span-2">
             <button
               type="submit"
+              disabled={resourcesLoading || resourceOptions.length === 0}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#061224] text-white rounded-xl font-bold hover:bg-[#0d2147] transition-colors"
             >
               <Clock3 className="w-4 h-4" />
-              Submit Request
+              {resourcesLoading ? 'Loading Resources...' : 'Submit Request'}
             </button>
           </div>
         </form>
@@ -483,13 +548,18 @@ function BookingsPage() {
 
             {isAdmin && (
               <>
-                <input
-                  type="text"
+                <select
                   value={filters.resourceName}
                   onChange={(e) => setFilters((prev) => ({ ...prev, resourceName: e.target.value }))}
-                  placeholder="Filter by resource"
                   className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
+                >
+                  <option value="">All Resources</option>
+                  {resourceOptions.map((resource) => (
+                    <option key={resource} value={resource}>
+                      {resource}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={loadBookings}
@@ -723,9 +793,10 @@ function BookingsPage() {
                   value={editForm.resourceName}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, resourceName: e.target.value }))}
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 bg-white"
+                  disabled={editResourceOptions.length === 0}
                   required
                 >
-                  {RESOURCE_OPTIONS.map((resource) => (
+                  {editResourceOptions.map((resource) => (
                     <option key={resource} value={resource}>
                       {resource}
                     </option>
@@ -799,6 +870,7 @@ function BookingsPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={editResourceOptions.length === 0}
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors"
                 >
                   <Pencil className="w-4 h-4" />

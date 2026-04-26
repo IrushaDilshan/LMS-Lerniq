@@ -9,8 +9,10 @@ import com.smartcampus.ticketing_service.exception.ResourceNotFoundException;
 import com.smartcampus.ticketing_service.exception.UnauthorizedException;
 import com.smartcampus.ticketing_service.model.BookingStatus;
 import com.smartcampus.ticketing_service.model.RecurrenceType;
+import com.smartcampus.ticketing_service.model.Resource;
 import com.smartcampus.ticketing_service.model.ResourceBooking;
 import com.smartcampus.ticketing_service.repository.ResourceBookingRepository;
+import com.smartcampus.ticketing_service.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -27,17 +29,20 @@ public class ResourceBookingService {
     private static final List<BookingStatus> CONFLICT_STATES = List.of(BookingStatus.PENDING, BookingStatus.APPROVED);
 
     private final ResourceBookingRepository bookingRepository;
+    private final ResourceRepository resourceRepository;
 
-    public ResourceBookingService(ResourceBookingRepository bookingRepository) {
+    public ResourceBookingService(ResourceBookingRepository bookingRepository, ResourceRepository resourceRepository) {
         this.bookingRepository = bookingRepository;
+        this.resourceRepository = resourceRepository;
     }
 
     public BookingResponse createBooking(BookingCreateRequest request) {
+        String validatedResourceName = validateActiveResource(request.getResourceName());
         validateTimeRange(request.getStartTime(), request.getEndTime());
-        ensureNoConflict(request.getResourceName(), request.getBookingDate(), request.getStartTime(), request.getEndTime(), null);
+        ensureNoConflict(validatedResourceName, request.getBookingDate(), request.getStartTime(), request.getEndTime(), null);
 
         ResourceBooking booking = new ResourceBooking();
-        booking.setResourceName(request.getResourceName().trim());
+        booking.setResourceName(validatedResourceName);
         booking.setBookingDate(request.getBookingDate());
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
@@ -101,7 +106,9 @@ public class ResourceBookingService {
         }
 
         if (request.getDecision() == BookingStatus.APPROVED) {
-            ensureNoConflict(booking.getResourceName(), booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), booking.getId());
+            String validatedResourceName = validateActiveResource(booking.getResourceName());
+            booking.setResourceName(validatedResourceName);
+            ensureNoConflict(validatedResourceName, booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), booking.getId());
         }
 
         booking.setStatus(request.getDecision());
@@ -151,15 +158,17 @@ public class ResourceBookingService {
             throw new IllegalArgumentException("Only PENDING bookings can be edited.");
         }
 
+        String validatedResourceName = validateActiveResource(request.getResourceName());
+
         ensureNoConflict(
-                request.getResourceName(),
+            validatedResourceName,
                 request.getBookingDate(),
                 request.getStartTime(),
                 request.getEndTime(),
                 booking.getId()
         );
 
-        booking.setResourceName(request.getResourceName().trim());
+        booking.setResourceName(validatedResourceName);
         booking.setBookingDate(request.getBookingDate());
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
@@ -205,15 +214,17 @@ public class ResourceBookingService {
 
         validateRepeatSelection(request);
 
+        String validatedResourceName = validateActiveResource(sourceBooking.getResourceName());
+
         LocalDate firstRepeatedDate = calculateFirstRepeatedDate(baseStartDate, request);
         List<ResourceBooking> toSave = new ArrayList<>();
 
         for (int i = 1; i <= request.getOccurrences(); i++) {
             LocalDate repeatedDate = calculateOccurrenceDate(firstRepeatedDate, request, i);
-            ensureNoConflict(sourceBooking.getResourceName(), repeatedDate, sourceBooking.getStartTime(), sourceBooking.getEndTime(), null);
+            ensureNoConflict(validatedResourceName, repeatedDate, sourceBooking.getStartTime(), sourceBooking.getEndTime(), null);
 
             ResourceBooking repeated = new ResourceBooking();
-            repeated.setResourceName(sourceBooking.getResourceName());
+            repeated.setResourceName(validatedResourceName);
             repeated.setBookingDate(repeatedDate);
             repeated.setStartTime(sourceBooking.getStartTime());
             repeated.setEndTime(sourceBooking.getEndTime());
@@ -274,6 +285,22 @@ public class ResourceBookingService {
         YearMonth yearMonth = YearMonth.from(seedDate);
         int safeDay = Math.min(dayOfMonth, yearMonth.lengthOfMonth());
         return yearMonth.atDay(safeDay);
+    }
+
+    private String validateActiveResource(String resourceName) {
+        if (resourceName == null || resourceName.isBlank()) {
+            throw new IllegalArgumentException("Resource name is required.");
+        }
+
+        String normalizedName = resourceName.trim();
+        Resource resource = resourceRepository.findFirstByNameIgnoreCase(normalizedName)
+            .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + normalizedName));
+
+        if (resource.getStatus() != Resource.ResourceStatus.ACTIVE) {
+            throw new IllegalArgumentException("Resource is not available for booking: " + normalizedName);
+        }
+
+        return resource.getName();
     }
 
     private void ensureNoConflict(String resourceName, LocalDate date, LocalTime startTime, LocalTime endTime, String currentBookingId) {
