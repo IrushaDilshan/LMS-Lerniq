@@ -1,16 +1,57 @@
-# React + Vite
+# UniOps - Smart Campus Operations Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## IT3030 - Programming Applications and Frameworks
+### Group Assignment 2026 - Semester 1
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Project Overview
+A university campus management system built with Spring Boot REST API and React frontend.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Module A - Facilities & Assets Catalogue
+### Developer: [Chamathki E.G.G.J]
 
-## Expanding the ESLint configuration
+### API Endpoints
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | /api/resources | Get all resources with filters | Public |
+| GET | /api/resources/{id} | Get resource by ID | Public |
+| POST | /api/resources | Create new resource | Admin Only |
+| PUT | /api/resources/{id} | Update resource | Admin Only |
+| DELETE | /api/resources/{id} | Delete resource | Admin Only |
+| PATCH | /api/resources/{id}/status | Update resource status | Admin Only |
+
+### Filter Parameters
+- **type** - LECTURE_HALL, LAB, MEETING_ROOM, EQUIPMENT
+- **location** - partial case-insensitive search
+- **minCapacity** - minimum capacity filter
+- **activeOnly** - show only active resources
+
+---
+
+## Tech Stack
+- **Frontend:** React + Vite
+- **Backend:** Spring Boot
+- **Database:** MongoDB
+- **Authentication:** OAuth 2.0 (Google)
+- **Version Control:** GitHub + GitHub Actions
+
+---
+
+## Setup Instructions
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+```bash
+cd backend
+./mvnw spring-boot:run
+```
