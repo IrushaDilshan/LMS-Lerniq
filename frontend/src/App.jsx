@@ -5,6 +5,7 @@ import LandingPage from './components/pages/LandingPage';
 import HomePage from './components/pages/HomePage';
 import SettingsPage from './components/pages/SettingsPage';
 import ResourcesPage from './components/pages/ResourcesPage';
+import BookingsPage from './components/pages/BookingsPage';
 import TicketDashboard from './components/pages/TicketDashboard';
 import TicketDetailView from './components/tickets/TicketDetailView';
 import TechnicianDashboard from './components/pages/TechnicianDashboard';
@@ -106,7 +107,6 @@ function AppContent() {
 
           <div className="flex items-center gap-10">
             {/* Role switcher was here - now handled by /admin and /tech routes */}
-
             <div className="flex items-center gap-3 pr-6 border-r border-gray-100">
                <button className="p-2.5 text-gray-400 hover:text-[#061224] transition-colors relative">
                  <Bell className="w-5 h-5" />
@@ -133,9 +133,14 @@ function AppContent() {
         <div className="flex-1 overflow-y-auto bg-[#F8FAFC]">
           <div className="p-8 pb-20">
             <Routes>
+              {/* Role Switching Shortcut Routes */}
+              <Route path="/admin" element={<RoleRedirect role="ADMIN" />} />
+              <Route path="/tech" element={<RoleRedirect role="TECHNICIAN" />} />
+              <Route path="/user" element={<RoleRedirect role="USER" />} />
+
               <Route path="/" element={<HomePage />} />
               <Route path="/resources" element={<ResourcesPage />} />
-              <Route path="/bookings" element={<div className="flex flex-col items-center justify-center h-96 grayscale opacity-30"><Calendar className="w-20 h-20 mb-4" /><p className="font-black uppercase tracking-[4px] text-xs">Module B (Coming Soon)</p></div>} />
+              <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/tickets" element={<TicketDashboard />} />
               <Route path="/tickets/:id" element={<TicketDetailView />} />
               <Route path="/technician" element={currentUser.role === 'TECHNICIAN' ? <TechnicianDashboard /> : <div className="text-center py-20"><h1 className="text-2xl font-black text-gray-900">Access Denied</h1><p className="text-gray-500 mt-2">This portal is reserved for technicians.</p></div>} />
@@ -147,6 +152,17 @@ function AppContent() {
       </div>
     </div>
   );
+}
+
+// Helper component to handle role switching via URL
+function RoleRedirect({ role }) {
+  const { mockLoginAs } = useAuth();
+  
+  useEffect(() => {
+    mockLoginAs(role);
+  }, [role, mockLoginAs]);
+
+  return <Navigate to="/" replace />;
 }
 
 function App() {
