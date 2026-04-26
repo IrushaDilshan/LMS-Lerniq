@@ -169,7 +169,7 @@ function AppContent() {
           <button
             onClick={() => {
               logout();
-              navigate("/");
+              navigate("/", { replace: true });
             }}
             className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-sm"
           >
@@ -295,11 +295,11 @@ function PublicRoutes() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/oauth-login" element={<OAuthLoginPage />} />
 
-      <Route path="/admin" element={<Navigate to="/oauth-login" replace />} />
-      <Route path="/tech" element={<Navigate to="/oauth-login" replace />} />
-      <Route path="/user" element={<Navigate to="/oauth-login" replace />} />
+      <Route path="/admin" element={<Navigate to="/" replace />} />
+      <Route path="/tech" element={<Navigate to="/" replace />} />
+      <Route path="/user" element={<Navigate to="/" replace />} />
 
-      <Route path="*" element={<Navigate to="/oauth-login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

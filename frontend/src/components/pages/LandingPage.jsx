@@ -38,7 +38,7 @@ const LandingPage = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-full bg-gradient-to-b from-transparent via-blue-500/20 to-transparent opacity-50" />
         
         {/* Grain Overlay */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.15] mix-blend-overlay" />
       </div>
 
       {/* ── Navbar ── */}
