@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import com.smartcampus.ticketing_service.exception.GlobalExceptionHandler;
 
@@ -70,8 +71,12 @@ public class IncidentTicketControllerTest {
         when(ticketService.createTicket(any(TicketCreateRequest.class), any())).thenReturn(mockResponse);
 
         MockMultipartFile file = new MockMultipartFile("files", "test.jpg", "image/jpeg", "image data".getBytes());
-        MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", 
-            ("{\"resourceLocation\":\"Library\", \"category\":\"HARDWARE\", \"description\":\"Screen broken\", \"priority\":\"MEDIUM\", \"preferredContactDetails\":\"12345\", \"createdByUserId\":4}").getBytes());
+        MockMultipartFile ticketPart = new MockMultipartFile(
+                "ticket",
+                "",
+                "application/json",
+                ("{\"resourceLocation\":\"Library\",\"category\":\"HARDWARE\",\"description\":\"Screen broken\",\"priority\":\"MEDIUM\",\"preferredContactDetails\":\"12345\",\"createdByUserId\":4}").getBytes(StandardCharsets.UTF_8)
+        );
 
         mockMvc.perform(multipart("/api/v1/tickets")
                 .file(file)
