@@ -25,11 +25,16 @@ import java.util.List;
 public class IncidentTicketService {
 
     private final IncidentTicketRepository ticketRepository;
+    private final com.smartcampus.ticketing_service.repository.UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final EmailService emailService;
 
-    public IncidentTicketService(IncidentTicketRepository ticketRepository, FileStorageService fileStorageService, EmailService emailService) {
+    public IncidentTicketService(IncidentTicketRepository ticketRepository, 
+                                 com.smartcampus.ticketing_service.repository.UserRepository userRepository,
+                                 FileStorageService fileStorageService, 
+                                 EmailService emailService) {
         this.ticketRepository = ticketRepository;
+        this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
         this.emailService = emailService;
     }
@@ -48,16 +53,18 @@ public class IncidentTicketService {
         ticket.setContactEmail(request.getContactEmail());
         ticket.setContactPhone(request.getContactPhone());
         
-        // Use simulated ID if not provided
-        Long creatorId = request.getCreatedByUserId() != null ? request.getCreatedByUserId() : 1001L;
+        // Use provided ID or throw error
+        String creatorId = request.getCreatedByUserId();
+        if (creatorId == null || creatorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Creation failed: Authorized User ID is missing.");
+        }
         ticket.setCreatedByUserId(creatorId);
         
-        // Auto-fill email if missing from simulated user
-        String email = request.getCreatedByEmail();
-        if (email == null || email.isEmpty()) {
-            email = SimulatedUserContext.getUserById(creatorId).getEmail();
-        }
-        ticket.setCreatedByEmail(email);
+        // Fetch user for details
+        com.smartcampus.ticketing_service.model.User user = userRepository.findById(creatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + creatorId));
+        
+        ticket.setCreatedByEmail(user.getEmail());
         
         ticket.setStatus(TicketStatus.OPEN);
 
@@ -105,7 +112,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<TicketResponse> getAllTickets(TicketStatus status, Long userId) {
+    public List<TicketResponse> getAllTickets(TicketStatus status, String userId) {
         List<IncidentTicket> tickets;
 
         if (status != null && userId != null) {
@@ -163,7 +170,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public TicketResponse updateTicket(String id, TicketUpdateRequest request, Long requestingUserId) {
+    public TicketResponse updateTicket(String id, TicketUpdateRequest request, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         
@@ -185,7 +192,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public void deleteTicket(String id, Long requestingUserId) {
+    public void deleteTicket(String id, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         
@@ -200,9 +207,12 @@ public class IncidentTicketService {
         ticketRepository.delete(ticket);
     }
 
-    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, Long requestingUserId) {
-        // Role check using simulated context
-        if (!SimulatedUserContext.isAdmin(requestingUserId)) {
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, String requestingUserId) {
+        // Role check using real user
+        com.smartcampus.ticketing_service.model.User requester = userRepository.findById(requestingUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Requester not found"));
+
+        if (requester.getRole() != com.smartcampus.ticketing_service.model.User.UserRole.ADMIN) {
             throw new UnauthorizedException("Access Denied: Only ADMIN can assign technicians to missions.");
         }
 
@@ -251,7 +261,7 @@ public class IncidentTicketService {
         return mapToCommentResponse(comment);
     }
 
-    public void deleteComment(String ticketId, String commentId, Long requestingUserId) {
+    public void deleteComment(String ticketId, String commentId, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 
@@ -276,8 +286,12 @@ public class IncidentTicketService {
         response.setCreatedAt(comment.getCreatedAt());
         
         if (comment.getCreatedByUserId() != null) {
-            SimulatedUserContext.MockUser user = SimulatedUserContext.getUserById(comment.getCreatedByUserId());
-            response.setAuthorName(user.getName() + " (" + user.getRole() + ")");
+            userRepository.findById(comment.getCreatedByUserId()).ifPresent(user -> {
+                response.setAuthorName(user.getFullName() + " (" + user.getRole() + ")");
+            });
+            if (response.getAuthorName() == null) {
+                response.setAuthorName("Unknown Personnel");
+            }
         } else {
             response.setAuthorName("System Automaton");
         }
@@ -302,14 +316,15 @@ public class IncidentTicketService {
         response.setCreatedByUserId(ticket.getCreatedByUserId());
         response.setCreatedByEmail(ticket.getCreatedByEmail());
         
-        // Populating names from Simulated Context
-        SimulatedUserContext.MockUser reporter = SimulatedUserContext.getUserById(ticket.getCreatedByUserId());
-        response.setCreatedByUserName(reporter.getName());
+        // Populating names from real User database
+        userRepository.findById(ticket.getCreatedByUserId()).ifPresent(reporter -> {
+            response.setCreatedByUserName(reporter.getFullName());
+        });
         
         if (ticket.getAssignedTechnicianId() != null) {
-            SimulatedUserContext.MockUser tech = SimulatedUserContext.getUserById(ticket.getAssignedTechnicianId());
-            response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
-            response.setAssignedTechnicianName(tech.getName());
+            userRepository.findById(ticket.getAssignedTechnicianId()).ifPresent(tech -> {
+                response.setAssignedTechnicianName(tech.getFullName());
+            });
         }
 
         response.setRating(ticket.getRating());

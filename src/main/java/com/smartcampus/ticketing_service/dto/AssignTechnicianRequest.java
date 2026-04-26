@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotNull;
 public class AssignTechnicianRequest {
 
     @NotNull(message = "Technician ID is required")
-    private Long technicianId;
+    private String technicianId;
 
-    public Long getTechnicianId() {
+    public String getTechnicianId() {
         return this.technicianId;
     }
 
-    public void setTechnicianId(Long technicianId) {
+    public void setTechnicianId(String technicianId) {
         this.technicianId = technicianId;
     }
 }

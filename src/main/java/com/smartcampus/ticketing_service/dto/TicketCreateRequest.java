@@ -29,8 +29,8 @@ public class TicketCreateRequest {
     @Pattern(regexp = "^\\d{10}$", message = "Phone number must be 10 digits")
     private String contactPhone;
 
-    @NotNull(message = "User ID is required")
-    private Long createdByUserId;
+    @NotBlank(message = "User ID is required")
+    private String createdByUserId;
 
     private String createdByEmail;
 
@@ -90,11 +90,11 @@ public class TicketCreateRequest {
         this.contactPhone = contactPhone;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
     
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 

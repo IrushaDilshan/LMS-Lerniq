@@ -36,17 +36,24 @@ public class IncidentTicketController {
             @Valid @RequestPart("ticket") TicketCreateRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         try {
+            System.out.println("DEBUG: Incoming Ticket Request from User: " + request.getCreatedByUserId());
+            System.out.println("DEBUG: Category: " + request.getCategory() + " | Location: " + request.getResourceLocation());
+            
             TicketResponse created = ticketService.createTicket(request, files);
-            return new ResponseEntity<>(created, HttpStatus.CREATED); //201 Sucessfully created resource
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); //400Bad Request
+            
+            System.out.println("DEBUG: Ticket created successfully with ID: " + created.getId());
+            return new ResponseEntity<>(created, HttpStatus.CREATED);
+        } catch (Exception e) {
+            System.err.println("CRITICAL ERROR in Ticket Creation: " + e.getMessage());
+            e.printStackTrace(); // This will print the full error in the terminal
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping
     public ResponseEntity<List<TicketResponse>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) String userId) {
         return ResponseEntity.ok(ticketService.getAllTickets(status, userId));
     }
 
@@ -66,7 +73,7 @@ public class IncidentTicketController {
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable String id,
-            @RequestParam Long requestingUserId,
+            @RequestParam String requestingUserId,
             @Valid @RequestBody TicketUpdateRequest request) {
         TicketResponse updated = ticketService.updateTicket(id, request, requestingUserId);
         return ResponseEntity.ok(updated);
@@ -75,7 +82,7 @@ public class IncidentTicketController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTicket(
             @PathVariable String id,
-            @RequestParam Long requestingUserId) {
+            @RequestParam String requestingUserId) {
         ticketService.deleteTicket(id, requestingUserId);
         return ResponseEntity.noContent().build();
     }
@@ -83,7 +90,7 @@ public class IncidentTicketController {
     @PutMapping("/{id}/assign")
     public ResponseEntity<?> assignTechnician(
             @PathVariable String id,
-            @RequestParam Long requestingUserId,
+            @RequestParam String requestingUserId,
             @Valid @RequestBody AssignTechnicianRequest request) {
         try {
             TicketResponse updated = ticketService.assignTechnician(id, request, requestingUserId);
@@ -129,7 +136,7 @@ public class IncidentTicketController {
     public ResponseEntity<Void> deleteComment(
             @PathVariable String ticketId,
             @PathVariable String commentId,
-            @RequestParam Long requestingUserId) {
+            @RequestParam String requestingUserId) {
         ticketService.deleteComment(ticketId, commentId, requestingUserId);
         return ResponseEntity.noContent().build(); // 204
     }

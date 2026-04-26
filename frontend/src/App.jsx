@@ -14,26 +14,15 @@ import { LogOut } from 'lucide-react';
 import AdminResourcesPage from './components/pages/AdminResourcesPage';
 
 import HeaderActions from './components/layout/HeaderActions';
+import LoginPage from './pages/LoginPage';
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, mockLoginAs, logout } = useAuth();
+  const { currentUser, login, logout } = useAuth();
   const isActive = (path) => location.pathname === path;
 
-  // Role switching shortcuts via URL
-  useEffect(() => {
-    if (location.pathname === '/admin') {
-      mockLoginAs('ADMIN');
-      navigate('/', { replace: true });
-    } else if (location.pathname === '/tech') {
-      mockLoginAs('TECHNICIAN');
-      navigate('/', { replace: true });
-    } else if (location.pathname === '/user_role') { // Avoid conflict with potential /user page
-      mockLoginAs('USER');
-      navigate('/', { replace: true });
-    }
-  }, [location.pathname, mockLoginAs, navigate]);
+  // Removed mock role-switching logic
 
   // Filter links based on role mapping
   const navLinks = [
@@ -119,11 +108,6 @@ function AppContent() {
         <div className="flex-1 overflow-y-auto bg-[#F8FAFC]">
           <div className="p-8 pb-20">
             <Routes>
-              {/* Role Switching Shortcut Routes */}
-              <Route path="/admin" element={<RoleRedirect role="ADMIN" />} />
-              <Route path="/tech" element={<RoleRedirect role="TECHNICIAN" />} />
-              <Route path="/user" element={<RoleRedirect role="USER" />} />
-
               <Route path="/" element={<HomePage />} />
               <Route path="/resources" element={currentUser.role === 'ADMIN' ? <AdminResourcesPage /> : <ResourcesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
@@ -140,16 +124,6 @@ function AppContent() {
   );
 }
 
-// Helper component to handle role switching via URL
-function RoleRedirect({ role }) {
-  const { mockLoginAs } = useAuth();
-  
-  useEffect(() => {
-    mockLoginAs(role);
-  }, [role, mockLoginAs]);
-
-  return <Navigate to="/" replace />;
-}
 
 function App() {
   return (
@@ -163,7 +137,7 @@ function App() {
 
 function AuthWrapper() {
   const { currentUser } = useAuth();
-  return currentUser ? <AppContent /> : <LandingPage />;
+  return currentUser ? <AppContent /> : <LoginPage />;
 }
 
 export default App;

@@ -24,8 +24,8 @@ public class IncidentTicket {
     private String contactPhone;
     private TicketStatus status = TicketStatus.OPEN;
     private List<String> attachmentUrls = new ArrayList<>();
-    private Long createdByUserId;
-    private Long assignedTechnicianId;
+    private String createdByUserId;
+    private String assignedTechnicianId;
     private String resolutionNote;
     private String rejectionReason;
     private String createdByEmail;
@@ -144,19 +144,19 @@ public class IncidentTicket {
         this.attachmentUrls = attachmentUrls;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
     
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 
-    public Long getAssignedTechnicianId() {
+    public String getAssignedTechnicianId() {
         return this.assignedTechnicianId;
     }
     
-    public void setAssignedTechnicianId(Long assignedTechnicianId) {
+    public void setAssignedTechnicianId(String assignedTechnicianId) {
         this.assignedTechnicianId = assignedTechnicianId;
     }
 
