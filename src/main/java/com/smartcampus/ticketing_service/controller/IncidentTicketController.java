@@ -83,11 +83,12 @@ public class IncidentTicketController {
     @PutMapping("/{id}/assign")
     public ResponseEntity<?> assignTechnician(
             @PathVariable String id,
+            @RequestParam Long requestingUserId,
             @Valid @RequestBody AssignTechnicianRequest request) {
         try {
-            TicketResponse updated = ticketService.assignTechnician(id, request);
+            TicketResponse updated = ticketService.assignTechnician(id, request, requestingUserId);
             return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | com.smartcampus.ticketing_service.exception.UnauthorizedException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

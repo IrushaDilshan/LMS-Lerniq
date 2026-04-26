@@ -14,6 +14,7 @@ import com.smartcampus.ticketing_service.dto.CommentCreateRequest;
 import com.smartcampus.ticketing_service.dto.CommentResponse;
 import com.smartcampus.ticketing_service.dto.TicketUpdateRequest;
 import com.smartcampus.ticketing_service.dto.TicketFeedbackRequest;
+import com.smartcampus.ticketing_service.util.SimulatedUserContext;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,8 +47,18 @@ public class IncidentTicketService {
         ticket.setPreferredContactDetails(request.getPreferredContactDetails());
         ticket.setContactEmail(request.getContactEmail());
         ticket.setContactPhone(request.getContactPhone());
-        ticket.setCreatedByUserId(request.getCreatedByUserId());
-        ticket.setCreatedByEmail(request.getCreatedByEmail());
+        
+        // Use simulated ID if not provided
+        Long creatorId = request.getCreatedByUserId() != null ? request.getCreatedByUserId() : 1001L;
+        ticket.setCreatedByUserId(creatorId);
+        
+        // Auto-fill email if missing from simulated user
+        String email = request.getCreatedByEmail();
+        if (email == null || email.isEmpty()) {
+            email = SimulatedUserContext.getUserById(creatorId).getEmail();
+        }
+        ticket.setCreatedByEmail(email);
+        
         ticket.setStatus(TicketStatus.OPEN);
 
         // Save first to get ID for file prefix
@@ -189,7 +200,12 @@ public class IncidentTicketService {
         ticketRepository.delete(ticket);
     }
 
-    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request) {
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, Long requestingUserId) {
+        // Role check using simulated context
+        if (!SimulatedUserContext.isAdmin(requestingUserId)) {
+            throw new UnauthorizedException("Access Denied: Only ADMIN can assign technicians to missions.");
+        }
+
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
 
@@ -258,18 +274,12 @@ public class IncidentTicketService {
         response.setContent(comment.getContent());
         response.setCreatedByUserId(comment.getCreatedByUserId());
         response.setCreatedAt(comment.getCreatedAt());
+        
         if (comment.getCreatedByUserId() != null) {
-            if (comment.getCreatedByUserId() == 1L) {
-                response.setAuthorName("Student User");
-            } else if (comment.getCreatedByUserId() == 99L) {
-                response.setAuthorName("Admin Manager");
-            } else if (comment.getCreatedByUserId() == 10L) {
-                response.setAuthorName("John Doe (Tech)");
-            } else {
-                response.setAuthorName("User " + comment.getCreatedByUserId());
-            }
+            SimulatedUserContext.MockUser user = SimulatedUserContext.getUserById(comment.getCreatedByUserId());
+            response.setAuthorName(user.getName() + " (" + user.getRole() + ")");
         } else {
-            response.setAuthorName("Unknown System User");
+            response.setAuthorName("System Automaton");
         }
         
         return response;
@@ -291,9 +301,19 @@ public class IncidentTicketService {
         response.setAttachmentUrls(ticket.getAttachmentUrls());
         response.setCreatedByUserId(ticket.getCreatedByUserId());
         response.setCreatedByEmail(ticket.getCreatedByEmail());
+        
+        // Populating names from Simulated Context
+        SimulatedUserContext.MockUser reporter = SimulatedUserContext.getUserById(ticket.getCreatedByUserId());
+        response.setCreatedByUserName(reporter.getName());
+        
+        if (ticket.getAssignedTechnicianId() != null) {
+            SimulatedUserContext.MockUser tech = SimulatedUserContext.getUserById(ticket.getAssignedTechnicianId());
+            response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
+            response.setAssignedTechnicianName(tech.getName());
+        }
+
         response.setRating(ticket.getRating());
         response.setFeedbackComment(ticket.getFeedbackComment());
-        response.setAssignedTechnicianId(ticket.getAssignedTechnicianId());
         response.setCreatedAt(ticket.getCreatedAt());
         response.setUpdatedAt(ticket.getUpdatedAt());
         return response;

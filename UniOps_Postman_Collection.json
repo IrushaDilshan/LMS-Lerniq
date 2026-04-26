@@ -1,0 +1,304 @@
+{
+	"info": {
+		"_postman_id": "8b2d5f1a-3e4b-4a5c-9d8e-7f6g5h4i3j2k",
+		"name": "UniOps Viva Demo Collection",
+		"description": "Comprehensive Incident Ticket Management workflow for Viva demonstration. Bypasses missing user management by using explicit Role/ID simulations.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Phase 1: Student Submission",
+			"item": [
+				{
+					"name": "1. Report Incident",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"active_ticket_id\", jsonData.id);",
+									"pm.test(\"Ticket Created Successfully\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "ticket",
+									"value": "{\n  \"resourceLocation\": \"Block B - Server Room\",\n  \"category\": \"Network\",\n  \"description\": \"Intermittent internet connectivity since 9 AM.\",\n  \"priority\": \"CRITICAL\",\n  \"contactEmail\": \"student@uni.edu\",\n  \"contactPhone\": \"0112345678\",\n  \"createdByUserId\": {{student_id}}\n}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets"
+							]
+						}
+					}
+				},
+				{
+					"name": "2. Check My Ticket Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Phase 2: Admin Operations",
+			"item": [
+				{
+					"name": "1. View All Pending Missions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets?status=OPEN",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "OPEN"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "2. Dispatch Technician",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Technician Dispatched\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().assignedTechnicianId).to.eql(parseInt(pm.environment.get(\"tech_id\")));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"technicianId\": {{tech_id}},\n  \"technicianName\": \"Agent Smith\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/assign?requestingUserId=5005",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}",
+								"assign"
+							],
+							"query": [
+								{
+									"key": "requestingUserId",
+									"value": "5005",
+									"description": "Simulated Admin ID"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Phase 3: Technician Execution",
+			"item": [
+				{
+					"name": "1. Accept & Start Work",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"resolutionNote\": \"STARTED_BY_TECH\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}",
+								"status"
+							]
+						}
+					}
+				},
+				{
+					"name": "2. Add Operational Comment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Replaced faulty switch in Rack 2. Testing connectivity now.\",\n  \"authorUserId\": {{tech_id}},\n  \"authorName\": \"Agent Smith\",\n  \"authorRole\": \"TECHNICIAN\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/comments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}",
+								"comments"
+							]
+						}
+					}
+				},
+				{
+					"name": "3. Mark as Resolved",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"RESOLVED\",\n  \"resolutionNote\": \"Faulty networking switch replaced. Link stable at 1Gbps.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}",
+								"status"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Phase 4: Feedback Loop",
+			"item": [
+				{
+					"name": "1. Submit User Feedback",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rating\": 5,\n  \"comment\": \"Perfect! The internet is back and much faster than before.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tickets/{{active_ticket_id}}/feedback",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tickets",
+								"{{active_ticket_id}}",
+								"feedback"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8089",
+			"type": "string"
+		},
+		{
+			"key": "student_id",
+			"value": "1001",
+			"type": "string"
+		},
+		{
+			"key": "tech_id",
+			"value": "2002",
+			"type": "string"
+		},
+		{
+			"key": "active_ticket_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

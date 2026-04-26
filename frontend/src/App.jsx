@@ -11,6 +11,9 @@ import TicketDetailView from './components/tickets/TicketDetailView';
 import TechnicianDashboard from './components/pages/TechnicianDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LogOut } from 'lucide-react';
+import AdminResourcesPage from './components/pages/AdminResourcesPage';
+
+import HeaderActions from './components/layout/HeaderActions';
 
 function AppContent() {
   const location = useLocation();
@@ -93,29 +96,12 @@ function AppContent() {
         {/* ── Top Bar ── */}
         <header className="h-[80px] bg-white border-b border-gray-100 flex items-center justify-between px-8 relative z-20">
           <div className="flex items-center gap-4 flex-1">
-             <div className="relative group hidden md:block max-w-md w-full">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                   <Home className="w-4 h-4 text-gray-400" />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="Universal Search (Resources, Tickets, Tools...)" 
-                  className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                />
-             </div>
+             {/* Search bar removed */}
           </div>
 
           <div className="flex items-center gap-10">
-            {/* Role switcher was here - now handled by /admin and /tech routes */}
-            <div className="flex items-center gap-3 pr-6 border-r border-gray-100">
-               <button className="p-2.5 text-gray-400 hover:text-[#061224] transition-colors relative">
-                 <Bell className="w-5 h-5" />
-                 <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
-               </button>
-               <button className="p-2.5 text-gray-400 hover:text-[#061224] transition-colors">
-                 <MessageSquare className="w-5 h-5" />
-               </button>
-            </div>
+            {/* Interactive Notifications and Messages */}
+            <HeaderActions currentUser={currentUser} />
 
             <div className="flex items-center gap-4 group cursor-pointer">
                <div className="text-right hidden sm:block">
@@ -139,7 +125,7 @@ function AppContent() {
               <Route path="/user" element={<RoleRedirect role="USER" />} />
 
               <Route path="/" element={<HomePage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/resources" element={currentUser.role === 'ADMIN' ? <AdminResourcesPage /> : <ResourcesPage />} />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/tickets" element={<TicketDashboard />} />
               <Route path="/tickets/:id" element={<TicketDetailView />} />
