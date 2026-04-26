@@ -20,10 +20,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.nio.charset.StandardCharsets;
 
 import com.smartcampus.ticketing_service.exception.GlobalExceptionHandler;
 
@@ -87,11 +87,12 @@ public class IncidentTicketControllerTest {
 
         byte[] ticketJson = objectMapper.writeValueAsBytes(request);
         MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", ticketJson);
+        
+        MockMultipartHttpServletRequestBuilder requestBuilder = multipart("/api/v1/tickets");
+        requestBuilder.file(file);
+        requestBuilder.file(ticketPart);
 
-        mockMvc.perform(multipart("/api/v1/tickets")
-                .file(file)
-                .file(ticketPart)
-                .contentType(MediaType.MULTIPART_FORM_DATA))
+        mockMvc.perform(requestBuilder)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.resourceLocation").value("Library"));
