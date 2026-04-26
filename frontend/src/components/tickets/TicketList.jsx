@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, Clock, CheckCircle, Ticket, AlertTriangle, 
-  RefreshCw, ChevronRight, Filter, Star, Search, 
-  MoreVertical, MoreHorizontal, LayoutList, Grid, ArrowUpDown
+  RefreshCw, ChevronRight, Filter, Star, Search, X,
+  MoreVertical, MoreHorizontal
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/axios';
@@ -19,9 +19,11 @@ const STATUS_TABS = [
 
 const StatusBadge = ({ ticket }) => {
   const status = ticket.status;
+  const isTechWorking = status === 'IN_PROGRESS' && ticket.resolutionNote === 'STARTED_BY_TECH';
+  
   const map = {
     OPEN:        { label: 'OPEN',        cls: 'bg-amber-500/10 text-amber-600 border-amber-200/50', icon: AlertCircle, dot: 'bg-amber-500' },
-    IN_PROGRESS: { label: 'ACTIVE',      cls: 'bg-blue-500/10 text-blue-600 border-blue-200/50', icon: Clock, dot: 'bg-blue-500' },
+    IN_PROGRESS: { label: isTechWorking ? 'TECHNICIAN WORKING' : 'ACTIVE', cls: 'bg-blue-500/10 text-blue-600 border-blue-200/50', icon: Clock, dot: 'bg-blue-500' },
     RESOLVED:    { label: 'RESOLVED',    cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50', icon: CheckCircle, dot: 'bg-emerald-500' },
     CLOSED:      { label: 'CLOSED',      cls: 'bg-slate-500/10 text-slate-600 border-slate-200/50', icon: CheckCircle, dot: 'bg-slate-500' },
     REJECTED:    { label: 'REJECTED',    cls: 'bg-rose-500/10 text-rose-600 border-rose-200/50', icon: AlertCircle, dot: 'bg-rose-500' },
@@ -59,7 +61,8 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState('table');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const effectiveNewTicketId = highlightTicketId || location.state?.newTicketId;
@@ -104,6 +107,16 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
     }
   };
 
+  const filteredTickets = tickets.filter(ticket => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+        ticket.id?.toString().toLowerCase().includes(searchLower) ||
+        ticket.resourceLocation?.toLowerCase().includes(searchLower) ||
+        ticket.description?.toLowerCase().includes(searchLower) ||
+        ticket.category?.toLowerCase().includes(searchLower)
+    );
+  });
+
   if (isLoading) {
     return (
       <div className="p-20 flex flex-col items-center gap-6">
@@ -138,31 +151,40 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
         </div>
         
         <div className="flex items-center gap-3">
-            <div className="flex items-center bg-gray-100 p-1 rounded-xl">
+            <div className={`flex items-center gap-2 transition-all duration-300 ${isSearchOpen ? 'w-64 opacity-100' : 'w-10 opacity-100'}`}>
+                {isSearchOpen && (
+                    <input 
+                        autoFocus
+                        type="text"
+                        placeholder="Search Intel..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                )}
                 <button 
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    onClick={() => {
+                        if (isSearchOpen) setSearchTerm('');
+                        setIsSearchOpen(!isSearchOpen);
+                    }}
+                    className={`p-2.5 rounded-xl transition-all ${isSearchOpen ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white border border-gray-200 text-gray-400 hover:text-blue-600'}`}
                 >
-                    <LayoutList className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    <Grid className="w-4 h-4" />
+                    {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                 </button>
             </div>
+
             <button 
-              onClick={() => fetchTickets(true)}
-              className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                onClick={() => { fetchTickets(true); fetchAllForCounts(); }} 
+                className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-blue-600 transition-all hover:rotate-180 duration-500"
+                title="Synchronize Database"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
         </div>
       </div>
 
       <div className="p-4 sm:p-8">
-        {tickets.length === 0 ? (
+        {filteredTickets.length === 0 ? (
           <div className="text-center py-20 flex flex-col items-center">
             <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-6 border border-dashed border-gray-200">
               <Search className="w-8 h-8 text-gray-300" />
@@ -185,17 +207,17 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map((ticket) => (
+                {filteredTickets.map((ticket) => (
                   <tr 
                     key={ticket.id} 
                     onClick={() => navigate(`/tickets/${ticket.id}`)}
-                    className={`group hover:bg-[#061224] transition-all cursor-pointer rounded-[1.5rem] relative
-                      ${ticket.id === effectiveNewTicketId ? 'bg-blue-50/50 ring-2 ring-blue-500 ring-offset-2' : 'bg-white border border-gray-100 shadow-sm'}`}
+                    className={`group hover:bg-blue-50/80 transition-all cursor-pointer rounded-[1.5rem] relative
+                      ${ticket.id === effectiveNewTicketId ? 'bg-blue-100/50 ring-2 ring-blue-500 ring-offset-2' : 'bg-white border border-gray-100 shadow-sm'}`}
                   >
-                    <td className="py-6 pl-6 rounded-l-[1.5rem] border-y border-l border-transparent group-hover:border-[#061224]">
+                    <td className="py-6 pl-6 rounded-l-[1.5rem] border-y border-l border-transparent group-hover:border-blue-200/50">
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-6 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-xs font-black text-gray-400 group-hover:text-blue-400 transition-colors">#{ticket.id}</span>
+                        <span className="text-xs font-black text-gray-400 group-hover:text-blue-600 transition-colors">#{ticket.id}</span>
                         {ticket.id === effectiveNewTicketId && (
                            <span className="bg-blue-600 text-white text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black animate-pulse">NEW</span>
                         )}
@@ -203,12 +225,12 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                     </td>
                     <td className="py-6 px-4">
                       <div className="max-w-[280px]">
-                        <p className="font-black text-gray-900 text-sm group-hover:text-white transition-colors">{ticket.resourceLocation}</p>
-                        <p className="text-xs text-gray-500 font-medium truncate mt-1 group-hover:text-gray-400 transition-colors">{ticket.description}</p>
+                        <p className="font-black text-gray-900 text-sm group-hover:text-blue-900 transition-colors">{ticket.resourceLocation}</p>
+                        <p className="text-xs text-gray-500 font-medium truncate mt-1">{ticket.description}</p>
                       </div>
                     </td>
                     <td className="py-6 px-4">
-                        <span className="text-xs font-extrabold text-gray-600 group-hover:text-blue-100 transition-colors">{ticket.category}</span>
+                        <span className="text-xs font-extrabold text-gray-600">{ticket.category}</span>
                     </td>
                     <td className="py-6 px-4">
                         <PriorityBadge priority={ticket.priority} />
@@ -218,18 +240,18 @@ const TicketList = ({ filterTechnicianId, highlightTicketId }) => {
                     </td>
                     <td className="py-6 px-4">
                         <div className="flex flex-col">
-                            <span className="text-xs font-black text-gray-900 group-hover:text-white">
+                            <span className="text-xs font-black text-gray-900">
                                 {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </span>
-                            <span className="text-[10px] font-bold text-gray-400 group-hover:text-blue-300/60 mt-0.5">
+                            <span className="text-[10px] font-bold text-gray-400 mt-0.5">
                                 {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
                     </td>
-                    <td className="py-6 pr-6 text-right rounded-r-[1.5rem] border-y border-r border-transparent group-hover:border-[#061224]">
+                    <td className="py-6 pr-6 text-right rounded-r-[1.5rem] border-y border-r border-transparent group-hover:border-blue-200/50">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-white/10 transition-all">
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-blue-100 transition-all">
+                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
                         </div>
                       </div>
                     </td>

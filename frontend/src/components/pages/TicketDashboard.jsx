@@ -147,15 +147,6 @@ const TicketDashboard = () => {
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 Live Uplink Active
             </div>
-            <div className="h-8 w-[1px] bg-gray-200 hidden md:block" />
-            <div className="flex items-center gap-2">
-                <button className="p-2.5 bg-white rounded-xl border border-gray-100 text-gray-400 hover:text-blue-600 transition-colors shadow-sm">
-                    <Search className="w-5 h-5" />
-                </button>
-                <button className="p-2.5 bg-white rounded-xl border border-gray-100 text-gray-400 hover:text-blue-600 transition-colors shadow-sm">
-                    <Filter className="w-5 h-5" />
-                </button>
-            </div>
         </div>
       </div>
 

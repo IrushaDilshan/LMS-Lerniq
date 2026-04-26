@@ -199,16 +199,17 @@ const TechnicianDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Main Operational Area */}
+      <div className="space-y-10">
         
-        {/* Left Column: Current Focus & Map */}
-        <div className="lg:col-span-1 space-y-8">
-            <div>
+        {/* Row 1: Priority Mission & Map View */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
                 <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2 pl-1">
                     <Target className="w-3 h-3" /> Priority Mission
                 </h3>
                 {focusTicket ? (
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-gray-200/20 relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-gray-200/20 relative overflow-hidden group hover:shadow-2xl transition-all duration-500 h-[400px] flex flex-col justify-between">
                         <div className={`absolute top-0 right-0 w-32 h-32 ${focusTicket.priority === 'CRITICAL' ? 'bg-rose-500/5' : 'bg-blue-500/5'} rounded-full blur-3xl -mr-16 -mt-16 transition-all duration-700 group-hover:scale-150`} />
                         
                         <div className="relative z-10">
@@ -220,92 +221,82 @@ const TechnicianDashboard = () => {
                             <h4 className="text-2xl font-black text-gray-900 leading-tight mb-4 group-hover:text-blue-600 transition-colors">
                                 {focusTicket.category} Incident
                             </h4>
-                            <p className="text-gray-500 text-sm mb-8 line-clamp-3 leading-relaxed">
+                            <p className="text-gray-500 text-sm mb-6 line-clamp-3 leading-relaxed">
                                 {focusTicket.description}
                             </p>
                             
-                            <div className="grid grid-cols-1 gap-4 mb-8">
-                                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 group-hover:bg-blue-50/50 transition-colors">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                        <MapPin className="w-5 h-5 text-blue-500" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Location</p>
-                                        <p className="text-sm font-extrabold text-gray-900">{focusTicket.resourceLocation}</p>
-                                    </div>
+                            <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 group-hover:bg-blue-50/50 transition-colors mb-6">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                    <MapPin className="w-5 h-5 text-blue-500" />
                                 </div>
-                                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 group-hover:bg-emerald-50/50 transition-colors">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                        <Clock className="w-5 h-5 text-emerald-500" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Reported</p>
-                                        <p className="text-sm font-extrabold text-gray-900">{new Date(focusTicket.createdAt).toLocaleDateString()}</p>
-                                    </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Location</p>
+                                    <p className="text-sm font-extrabold text-gray-900">{focusTicket.resourceLocation}</p>
                                 </div>
                             </div>
-                            
-                            <button 
-                                onClick={() => navigate(`/tickets/${focusTicket.id}`)}
-                                className="w-full py-5 bg-[#061224] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all hover:bg-blue-600"
-                            >
-                                Dispatch Now <ChevronRight className="w-4 h-4" />
-                            </button>
                         </div>
+
+                        <button 
+                            onClick={() => navigate(`/tickets/${focusTicket.id}`)}
+                            className="relative z-10 w-full py-5 bg-[#061224] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all hover:bg-blue-600"
+                        >
+                            Dispatch Now <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 ) : (
-                    <div className="bg-white/50 backdrop-blur-sm rounded-[2.5rem] p-12 border border-dashed border-gray-300 text-center flex flex-col items-center gap-4 shadow-sm">
+                    <div className="bg-white/50 backdrop-blur-sm rounded-[2.5rem] p-12 border border-dashed border-gray-300 text-center flex flex-col items-center justify-center gap-4 shadow-sm h-[400px]">
                         <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
                             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                         </div>
                         <div>
                             <p className="text-gray-900 font-black text-lg">Clear Horizon</p>
-                            <p className="text-gray-500 text-sm font-medium">All tasks resolved. Standby for dispatch.</p>
+                            <p className="text-gray-500 text-sm font-medium">All tasks resolved.</p>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Operational Map View (Mock) */}
-            <div className="relative group overflow-hidden rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/10">
-                <div className="absolute top-0 left-0 w-full h-full bg-[#f8fafc] z-0">
-                    {/* SVG Map Pattern */}
-                    <svg className="w-full h-full opacity-30" viewBox="0 0 400 300">
-                        <path d="M0,50 Q100,20 200,80 T400,30" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
-                        <path d="M0,150 Q150,180 300,120 T400,200" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
-                        <path d="M50,0 Q20,100 80,200 T30,300" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
-                        <path d="M250,0 Q280,150 220,300" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
-                        
-                        {/* Map Dots */}
-                        <circle cx="120" cy="80" r="4" fill="#3b82f6" className="animate-pulse" />
-                        <circle cx="280" cy="150" r="4" fill="#ef4444" className="animate-pulse" />
-                        <circle cx="200" cy="220" r="4" fill="#10b981" className="animate-pulse" />
-                    </svg>
-                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
-                </div>
-                
-                <div className="relative z-10 p-8 h-[300px] flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                            Real-time Assets
-                        </h3>
-                        <div className="flex -space-x-2">
-                            {[1,2,3].map(i => (
-                                <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm">
-                                    <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="avatar" />
-                                </div>
-                            ))}
-                        </div>
+            <div className="lg:col-span-2">
+                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2 pl-1">
+                    <MapIcon className="w-3 h-3" /> Live Operations Map
+                </h3>
+                <div className="relative group overflow-hidden rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/10 h-[400px]">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[#f8fafc] z-0">
+                        <svg className="w-full h-full opacity-30" viewBox="0 0 400 300" preserveAspectRatio="none">
+                            <path d="M0,50 Q100,20 200,80 T400,30" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
+                            <path d="M0,150 Q150,180 300,120 T400,200" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
+                            <path d="M50,0 Q20,100 80,200 T30,300" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
+                            <path d="M250,0 Q280,150 220,300" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
+                            <circle cx="120" cy="80" r="4" fill="#3b82f6" className="animate-pulse" />
+                            <circle cx="280" cy="150" r="4" fill="#ef4444" className="animate-pulse" />
+                            <circle cx="200" cy="220" r="4" fill="#10b981" className="animate-pulse" />
+                        </svg>
+                        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
                     </div>
                     
-                    <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-gray-100 shadow-lg group-hover:translate-y-[-10px] transition-transform duration-500">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600">
-                                <MapIcon className="w-5 h-5" />
+                    <div className="relative z-10 p-8 h-full flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                                System Telemetry
+                            </h3>
+                            <div className="flex -space-x-2">
+                                {[1,2,3,4,5].map(i => (
+                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm">
+                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="avatar" />
+                                    </div>
+                                ))}
                             </div>
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Locations</p>
-                                <p className="text-sm font-bold text-gray-900">University Main Campus</p>
+                        </div>
+                        
+                        <div className="bg-white/90 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-lg group-hover:translate-y-[-10px] transition-transform duration-500 max-w-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600">
+                                    <MapIcon className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Perimeter</p>
+                                    <p className="text-base font-bold text-gray-900">Main Campus North Wing</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -313,50 +304,44 @@ const TechnicianDashboard = () => {
             </div>
         </div>
 
-        {/* Right Column: Active Maintenance Queue */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Row 2: Full Width Maintenance Queue */}
+        <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
                 <div>
                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">
                         Active Maintenance Queue
                     </h3>
-                    <p className="text-xs font-bold text-gray-900">Real-time Ticket Feed</p>
+                    <p className="text-xs font-bold text-gray-900">Real-time Ticket Feed • Centralized Control</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-500 transition-colors">
-                        <Search className="w-4 h-4" />
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-black text-gray-600 transition-colors uppercase tracking-widest">
-                        <Filter className="w-3.5 h-3.5" /> Filter
-                    </button>
+                <div className="flex items-center gap-3">
+                    {/* Filter Logs button removed */}
                 </div>
             </div>
             
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/20 overflow-hidden hover:shadow-2xl transition-all duration-500">
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/10 overflow-hidden min-h-[600px]">
                 <TicketList filterTechnicianId={CURRENT_TECHNICIAN_ID} />
             </div>
 
-            {/* Quick Analytics Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Quick Analytics Footer */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[
                     { label: 'Avg Time', value: '38m', icon: Clock, color: 'text-blue-500' },
                     { label: 'Uptime', value: '99.9%', icon: Activity, color: 'text-emerald-500' },
                     { label: 'Reliability', value: 'High', icon: Shield, color: 'text-indigo-500' },
                     { label: 'Messages', value: '3 New', icon: Bell, color: 'text-amber-500' },
                 ].map((stat, idx) => (
-                    <div key={idx} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-4 group hover:bg-[#061224] transition-colors duration-300">
-                        <div className={`p-3 rounded-xl bg-gray-50 group-hover:bg-white/10 transition-colors`}>
-                            <stat.icon className={`w-5 h-5 ${stat.color} group-hover:text-white`} />
+                    <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-4 group hover:bg-[#061224] transition-colors duration-300">
+                        <div className={`p-4 rounded-2xl bg-gray-50 group-hover:bg-white/10 transition-colors`}>
+                            <stat.icon className={`w-6 h-6 ${stat.color} group-hover:text-white`} />
                         </div>
                         <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-200/50">{stat.label}</p>
-                            <p className="text-sm font-extrabold text-gray-900 group-hover:text-white">{stat.value}</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-200/50">{stat.label}</p>
+                            <p className="text-base font-extrabold text-gray-900 group-hover:text-white">{stat.value}</p>
                         </div>
                     </div>
                 ))}
             </div>
         </div>
-
       </div>
 
     </div>
