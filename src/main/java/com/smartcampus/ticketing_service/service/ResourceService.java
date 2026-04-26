@@ -14,6 +14,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Resource Service - Module A: Facilities & Assets Catalogue
+ * Handles all business logic for campus resource management
+ *
+ * Features:
+ * - Dynamic filtering using MongoDB Query and Criteria builder
+ * - Partial update support - only provided fields are updated
+ * - Automatic timestamp management (createdAt, updatedAt)
+ * - ResourceNotFoundException thrown when resource not found
+ *
+ * @author IrushaDilshan
+ */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
