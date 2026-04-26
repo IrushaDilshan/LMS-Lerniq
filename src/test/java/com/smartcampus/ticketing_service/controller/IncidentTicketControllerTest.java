@@ -19,9 +19,11 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 import com.smartcampus.ticketing_service.exception.GlobalExceptionHandler;
 
@@ -31,6 +33,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @ExtendWith(MockitoExtension.class)
 public class IncidentTicketControllerTest {
@@ -51,6 +54,7 @@ public class IncidentTicketControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(ticketController)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
                 .build();
 
         mockResponse = new TicketResponse();
@@ -70,8 +74,19 @@ public class IncidentTicketControllerTest {
         when(ticketService.createTicket(any(TicketCreateRequest.class), any())).thenReturn(mockResponse);
 
         MockMultipartFile file = new MockMultipartFile("files", "test.jpg", "image/jpeg", "image data".getBytes());
-        MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", 
-            ("{\"resourceLocation\":\"Library\", \"category\":\"HARDWARE\", \"description\":\"Screen broken\", \"priority\":\"MEDIUM\", \"preferredContactDetails\":\"12345\", \"createdByUserId\":4}").getBytes());
+        
+        TicketCreateRequest request = new TicketCreateRequest();
+        request.setResourceLocation("Library");
+        request.setCategory("HARDWARE");
+        request.setDescription("Screen broken");
+        request.setPriority(TicketPriority.MEDIUM);
+        request.setPreferredContactDetails("12345");
+        request.setContactEmail("test@example.com");
+        request.setContactPhone("0123456789");
+        request.setCreatedByUserId(4L);
+
+        byte[] ticketJson = objectMapper.writeValueAsBytes(request);
+        MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", ticketJson);
 
         mockMvc.perform(multipart("/api/v1/tickets")
                 .file(file)
