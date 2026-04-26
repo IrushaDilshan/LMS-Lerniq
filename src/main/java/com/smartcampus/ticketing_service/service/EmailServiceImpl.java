@@ -20,7 +20,6 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Async
     @Override
     public void sendTicketCreatedEmail(String to, String ticketId, String title) {
         String recipient = (to != null && to.contains("@")) ? to : "default-user@example.com";
@@ -50,7 +49,6 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    @Async
     @Override
     public void sendTicketStatusUpdatedEmail(String to, String ticketId, String title, String newStatus) {
         String recipient = (to != null && to.contains("@")) ? to : "default-user@example.com";

@@ -78,16 +78,25 @@ public class IncidentTicketService {
         }
 
         try {
-            String recipient = ticket.getCreatedByEmail();
+            String recipient = ticket.getContactEmail();
             
-            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            // Smart Fallback: If Email field is empty, check profile email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                recipient = ticket.getCreatedByEmail();
+            }
+            
             if (recipient == null || recipient.trim().isEmpty()) {
                 String contact = ticket.getContactEmail();
                 if (contact == null || contact.trim().isEmpty()) {
                     contact = ticket.getPreferredContactDetails();
                 }
                 if (contact != null && contact.contains("@")) {
-                    recipient = contact;
+                    for (String part : contact.split("[\\s,/]+")) {
+                        if (part.contains("@")) {
+                            recipient = part.trim();
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -140,16 +149,24 @@ public class IncidentTicketService {
         ticket = ticketRepository.save(ticket);
 
         try {
-            String recipient = ticket.getCreatedByEmail();
+            String recipient = ticket.getContactEmail();
             
-            // Smart Fallback: If Email field is empty, check Contact Details for an @ email
+            if (recipient == null || recipient.trim().isEmpty()) {
+                recipient = ticket.getCreatedByEmail();
+            }
+            
             if (recipient == null || recipient.trim().isEmpty()) {
                 String contact = ticket.getContactEmail();
                 if (contact == null || contact.trim().isEmpty()) {
                     contact = ticket.getPreferredContactDetails();
                 }
                 if (contact != null && contact.contains("@")) {
-                    recipient = contact;
+                    for (String part : contact.split("[\\s,/]+")) {
+                        if (part.contains("@")) {
+                            recipient = part.trim();
+                            break;
+                        }
+                    }
                 }
             }
             
