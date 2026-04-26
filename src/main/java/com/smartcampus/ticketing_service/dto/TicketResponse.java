@@ -19,8 +19,8 @@ public class TicketResponse {
     private String contactPhone;
     private TicketStatus status;
     private List<String> attachmentUrls;
-    private Long createdByUserId;
-    private Long assignedTechnicianId;
+    private String createdByUserId;
+    private String assignedTechnicianId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdByEmail;
@@ -141,19 +141,19 @@ public class TicketResponse {
         this.attachmentUrls = attachmentUrls;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
     
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 
-    public Long getAssignedTechnicianId() {
+    public String getAssignedTechnicianId() {
         return this.assignedTechnicianId;
     }
     
-    public void setAssignedTechnicianId(Long assignedTechnicianId) {
+    public void setAssignedTechnicianId(String assignedTechnicianId) {
         this.assignedTechnicianId = assignedTechnicianId;
     }
 

@@ -6,7 +6,7 @@ public class CommentResponse {
     
     private String id;
     private String content;
-    private Long createdByUserId;
+    private String createdByUserId;
     private LocalDateTime createdAt;
     
     // For UI simplicity, maybe later enrich with user name
@@ -28,11 +28,11 @@ public class CommentResponse {
         this.content = content;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
 
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 

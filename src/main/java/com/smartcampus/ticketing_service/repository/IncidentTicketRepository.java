@@ -9,8 +9,9 @@ import java.util.List;
 
 @Repository
 public interface IncidentTicketRepository extends MongoRepository<IncidentTicket, String> {
-    List<IncidentTicket> findByCreatedByUserId(Long userId);
-    List<IncidentTicket> findByAssignedTechnicianId(Long technicianId);
+    List<IncidentTicket> findByCreatedByUserId(String userId);
+    List<IncidentTicket> findByAssignedTechnicianId(String technicianId);
     List<IncidentTicket> findByStatus(TicketStatus status);
-    List<IncidentTicket> findByStatusAndCreatedByUserId(TicketStatus status, Long userId);
+    List<IncidentTicket> findByStatusAndCreatedByUserId(TicketStatus status, String userId);
 }
+

@@ -51,7 +51,7 @@ class IncidentTicketServiceTest {
         mockTicket.setCategory("HARDWARE");
         mockTicket.setDescription("Projector not working");
         mockTicket.setPriority(TicketPriority.HIGH);
-        mockTicket.setCreatedByUserId(1L);
+        mockTicket.setCreatedByUserId("1");
         mockTicket.setStatus(TicketStatus.OPEN);
         mockTicket.setCreatedAt(LocalDateTime.now());
     }
@@ -63,7 +63,7 @@ class IncidentTicketServiceTest {
         request.setCategory("HARDWARE");
         request.setDescription("Projector not working");
         request.setPriority(TicketPriority.HIGH);
-        request.setCreatedByUserId(1L);
+        request.setCreatedByUserId("1");
 
         List<MultipartFile> files = new ArrayList<>();
         files.add(new MockMultipartFile("file", "test.png", "image/png", "test data".getBytes()));
@@ -147,7 +147,7 @@ class IncidentTicketServiceTest {
     void addComment_HappyPath() {
         CommentCreateRequest request = new CommentCreateRequest();
         request.setContent("This is a test comment");
-        request.setCreatedByUserId(2L);
+        request.setCreatedByUserId("2");
 
         when(ticketRepository.findById("1")).thenReturn(Optional.of(mockTicket));
 
@@ -155,7 +155,7 @@ class IncidentTicketServiceTest {
 
         assertNotNull(response);
         assertEquals("This is a test comment", response.getContent());
-        assertEquals(2L, response.getCreatedByUserId());
+        assertEquals("2", response.getCreatedByUserId());
         
         verify(ticketRepository, times(1)).findById("1");
         verify(ticketRepository, times(1)).save(mockTicket);

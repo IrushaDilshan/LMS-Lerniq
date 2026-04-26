@@ -66,7 +66,7 @@ public class IncidentTicketControllerTest {
         mockResponse.setDescription("Screen broken");
         mockResponse.setPriority(TicketPriority.MEDIUM);
         mockResponse.setStatus(TicketStatus.OPEN);
-        mockResponse.setCreatedByUserId(4L);
+        mockResponse.setCreatedByUserId("4");
         mockResponse.setCreatedAt(LocalDateTime.now());
     }
 
@@ -84,7 +84,7 @@ public class IncidentTicketControllerTest {
         request.setPreferredContactDetails("12345");
         request.setContactEmail("test@example.com");
         request.setContactPhone("0123456789");
-        request.setCreatedByUserId(4L);
+        request.setCreatedByUserId("4");
 
         byte[] ticketJson = objectMapper.writeValueAsBytes(request);
         MockMultipartFile ticketPart = new MockMultipartFile("ticket", "", "application/json", ticketJson);

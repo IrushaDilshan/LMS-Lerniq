@@ -28,13 +28,13 @@ export const AuthProvider = ({ children }) => {
   const mockLoginAs = useCallback((role) => {
     switch (role) {
       case 'ADMIN':
-        setCurrentUser({ id: 99, name: 'Admin Manager', role: 'ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' });
+        setCurrentUser({ id: '99', name: 'Admin Manager', role: 'ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' });
         break;
       case 'TECHNICIAN':
-        setCurrentUser({ id: 10, name: 'John Doe (Tech)', role: 'TECHNICIAN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech' });
+        setCurrentUser({ id: '10', name: 'John Doe (Tech)', role: 'TECHNICIAN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech' });
         break;
       case 'USER':
-        setCurrentUser({ id: 1, name: 'Student User', role: 'USER', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' });
+        setCurrentUser({ id: '1', name: 'Student User', role: 'USER', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' });
         break;
       default:
         setCurrentUser(null);

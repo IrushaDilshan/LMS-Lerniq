@@ -46,7 +46,7 @@ public class IncidentTicketController {
     @GetMapping
     public ResponseEntity<List<TicketResponse>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) String userId) {
         return ResponseEntity.ok(ticketService.getAllTickets(status, userId));
     }
 
@@ -66,7 +66,7 @@ public class IncidentTicketController {
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable String id,
-            @RequestParam Long requestingUserId,
+            @RequestParam String requestingUserId,
             @Valid @RequestBody TicketUpdateRequest request) {
         TicketResponse updated = ticketService.updateTicket(id, request, requestingUserId);
         return ResponseEntity.ok(updated);
@@ -75,7 +75,7 @@ public class IncidentTicketController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTicket(
             @PathVariable String id,
-            @RequestParam Long requestingUserId) {
+            @RequestParam String requestingUserId) {
         ticketService.deleteTicket(id, requestingUserId);
         return ResponseEntity.noContent().build();
     }
@@ -83,7 +83,7 @@ public class IncidentTicketController {
     @PutMapping("/{id}/assign")
     public ResponseEntity<?> assignTechnician(
             @PathVariable String id,
-            @RequestParam Long requestingUserId,
+            @RequestParam String requestingUserId,
             @Valid @RequestBody AssignTechnicianRequest request) {
         try {
             TicketResponse updated = ticketService.assignTechnician(id, request, requestingUserId);
@@ -129,7 +129,7 @@ public class IncidentTicketController {
     public ResponseEntity<Void> deleteComment(
             @PathVariable String ticketId,
             @PathVariable String commentId,
-            @RequestParam Long requestingUserId) {
+            @RequestParam String requestingUserId) {
         ticketService.deleteComment(ticketId, commentId, requestingUserId);
         return ResponseEntity.noContent().build(); // 204
     }

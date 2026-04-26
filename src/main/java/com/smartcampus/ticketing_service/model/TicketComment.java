@@ -9,7 +9,7 @@ public class TicketComment {
 
     private String id = UUID.randomUUID().toString();
     private String content;
-    private Long createdByUserId;
+    private String createdByUserId;
 
     @CreatedDate
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -30,11 +30,11 @@ public class TicketComment {
         this.content = content;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
 
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 

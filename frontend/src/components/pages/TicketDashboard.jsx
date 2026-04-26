@@ -171,9 +171,9 @@ const TicketSubmissionFormWrapper = ({ onSuccess }) => {
 
 /* Enhanced version of TicketSubmissionForm that accepts onSuccess callback */
 import { UploadCloud, X as XIcon, Send, AlertCircle, CheckCircle2, Ticket } from 'lucide-react';
-import api2 from '../../api/axios';
 
 const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     resourceLocation: '',
     category: '',
@@ -237,12 +237,12 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
         preferredContactDetails: formData.contactEmail + " / " + formData.contactPhone,
-        createdByUserId: 1,
+        createdByUserId: currentUser.id,
       })], { type: 'application/json' });
       payload.append('ticket', blob);
       files.forEach(f => payload.append('files', f));
 
-      const res = await api2.post('/tickets', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await api.post('/tickets', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       if (res.status === 201 || res.status === 200) {
         setSubmitStatus('success');
@@ -389,7 +389,7 @@ const TicketSubmissionFormEnhanced = ({ onSuccess }) => {
         <button type="submit" disabled={isSubmitting}
           className="w-full bg-[#061224] text-white hover:bg-blue-600 active:scale-[0.98] transition-all rounded-2xl py-6 font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 disabled:opacity-50 shadow-2xl shadow-blue-900/20">
           {isSubmitting ? <Activity className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-          {isSubmitting ? 'Transmitting Data...' : 'Confirm & Deploy Log'}
+          {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
         </button>
       </form>
     </div>

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { UserCheck, Save } from 'lucide-react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const TechnicianAssigner = ({ ticketId, currentTechnicianId, onUpdateSuccess }) => {
+  const { currentUser } = useAuth();
   const [technicianId, setTechnicianId] = useState(currentTechnicianId || '');
   const [isAssigning, setIsAssigning] = useState(false);
   const [error, setError] = useState('');
@@ -11,10 +13,10 @@ const TechnicianAssigner = ({ ticketId, currentTechnicianId, onUpdateSuccess }) 
   // In a real app, you would fetch the list of available technicians from the backend.
   // For this assignment, we use a hardcoded list of dummy technicians for presentation.
   const dummyTechnicians = [
-    { id: 10, name: 'John Doe (IT Support)' },
-    { id: 11, name: 'Jane Smith (Electrician)' },
-    { id: 12, name: 'Bob Wilson (Plumber)' },
-    { id: 13, name: 'Alice Brown (Facilities)' }
+    { id: '10', name: 'John Doe (IT Support)' },
+    { id: '11', name: 'Jane Smith (Electrician)' },
+    { id: '12', name: 'Bob Wilson (Plumber)' },
+    { id: '13', name: 'Alice Brown (Facilities)' }
   ];
 
   const handleAssign = async (e) => {
@@ -27,8 +29,8 @@ const TechnicianAssigner = ({ ticketId, currentTechnicianId, onUpdateSuccess }) 
 
     try {
       const response = await api.put(`/tickets/${ticketId}/assign`, {
-        technicianId: parseInt(technicianId)
-      });
+        technicianId: technicianId
+      }, { params: { requestingUserId: currentUser.id } });
       if (response.status === 200) {
         setSuccess(true);
         // Automatically hide success message after 3 seconds
@@ -71,7 +73,7 @@ const TechnicianAssigner = ({ ticketId, currentTechnicianId, onUpdateSuccess }) 
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isAssigning || !technicianId || parseInt(technicianId) === currentTechnicianId}
+            disabled={isAssigning || !technicianId || technicianId === currentTechnicianId}
             className="bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all rounded-lg px-4 py-2 font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAssigning ? 'Assigning...' : (

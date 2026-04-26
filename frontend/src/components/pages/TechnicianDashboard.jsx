@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 
 const TechnicianDashboard = () => {
-  const CURRENT_TECHNICIAN_ID = 10;
+  const CURRENT_TECHNICIAN_ID = '10';
   const CURRENT_TECHNICIAN_NAME = "John Doe (IT Support)";
   const navigate = useNavigate();
 

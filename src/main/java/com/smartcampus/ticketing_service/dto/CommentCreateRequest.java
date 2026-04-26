@@ -7,7 +7,7 @@ public class CommentCreateRequest {
     @NotBlank(message = "Comment content cannot be empty")
     private String content;
 
-    private Long createdByUserId; // Usually sourced from token/session, mocked for now
+    private String createdByUserId; // Usually sourced from token/session, mocked for now
 
     public String getContent() {
         return this.content;
@@ -17,11 +17,11 @@ public class CommentCreateRequest {
         this.content = content;
     }
 
-    public Long getCreatedByUserId() {
+    public String getCreatedByUserId() {
         return this.createdByUserId;
     }
 
-    public void setCreatedByUserId(Long createdByUserId) {
+    public void setCreatedByUserId(String createdByUserId) {
         this.createdByUserId = createdByUserId;
     }
 }

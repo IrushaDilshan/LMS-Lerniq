@@ -49,7 +49,7 @@ public class IncidentTicketService {
         ticket.setContactPhone(request.getContactPhone());
         
         // Use simulated ID if not provided
-        Long creatorId = request.getCreatedByUserId() != null ? request.getCreatedByUserId() : 1001L;
+        String creatorId = request.getCreatedByUserId() != null ? request.getCreatedByUserId() : "1001";
         ticket.setCreatedByUserId(creatorId);
         
         // Auto-fill email if missing from simulated user
@@ -105,7 +105,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public List<TicketResponse> getAllTickets(TicketStatus status, Long userId) {
+    public List<TicketResponse> getAllTickets(TicketStatus status, String userId) {
         List<IncidentTicket> tickets;
 
         if (status != null && userId != null) {
@@ -163,7 +163,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public TicketResponse updateTicket(String id, TicketUpdateRequest request, Long requestingUserId) {
+    public TicketResponse updateTicket(String id, TicketUpdateRequest request, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         
@@ -185,7 +185,7 @@ public class IncidentTicketService {
         return mapToResponse(ticket);
     }
 
-    public void deleteTicket(String id, Long requestingUserId) {
+    public void deleteTicket(String id, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
         
@@ -200,7 +200,7 @@ public class IncidentTicketService {
         ticketRepository.delete(ticket);
     }
 
-    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, Long requestingUserId) {
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request, String requestingUserId) {
         // Role check using simulated context
         if (!SimulatedUserContext.isAdmin(requestingUserId)) {
             throw new UnauthorizedException("Access Denied: Only ADMIN can assign technicians to missions.");
@@ -251,7 +251,7 @@ public class IncidentTicketService {
         return mapToCommentResponse(comment);
     }
 
-    public void deleteComment(String ticketId, String commentId, Long requestingUserId) {
+    public void deleteComment(String ticketId, String commentId, String requestingUserId) {
         IncidentTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + ticketId));
 

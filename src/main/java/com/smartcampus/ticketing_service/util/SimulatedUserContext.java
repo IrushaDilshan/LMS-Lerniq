@@ -23,30 +23,35 @@ public class SimulatedUserContext {
     @Getter
     @AllArgsConstructor
     public static class MockUser {
-        private Long id;
+        private String id;
         private String name;
         private String email;
         private UserRole role;
     }
 
-    private static final Map<Long, MockUser> USERS = new HashMap<>();
+    private static final Map<String, MockUser> USERS = new HashMap<>();
 
     static {
-        // Hardcoded users for demo
-        USERS.put(1001L, new MockUser(1001L, "Student User", "student@uni.edu", UserRole.STUDENT));
-        USERS.put(2002L, new MockUser(2002L, "Agent Smith", "smith@uni-ops.com", UserRole.TECHNICIAN));
-        USERS.put(5005L, new MockUser(5005L, "Head Admin", "admin@uni-ops.com", UserRole.ADMIN));
+        // Hardcoded users for demo - Using String IDs to match MongoDB ObjectIds
+        USERS.put("1",    new MockUser("1",    "Student User", "student@uni.edu", UserRole.STUDENT));
+        USERS.put("10",   new MockUser("10",   "Agent Smith", "smith@uni-ops.com", UserRole.TECHNICIAN));
+        USERS.put("99",   new MockUser("99",   "Head Admin", "admin@uni-ops.com", UserRole.ADMIN));
+        
+        // Add the specific ID causing the crash just in case
+        USERS.put("69ee64b21215fd919e23e309", new MockUser("69ee64b21215fd919e23e309", "Legacy User", "legacy@uni-ops.com", UserRole.ADMIN));
     }
 
-    public static MockUser getUserById(Long id) {
+    public static MockUser getUserById(String id) {
+        if (id == null) return new MockUser(null, "System Automaton", "system@uni-ops.com", UserRole.ADMIN);
         return USERS.getOrDefault(id, new MockUser(id, "External User", "unknown@example.com", UserRole.STUDENT));
     }
 
-    public static boolean isAdmin(Long userId) {
+    public static boolean isAdmin(String userId) {
         return USERS.containsKey(userId) && USERS.get(userId).getRole() == UserRole.ADMIN;
     }
 
-    public static boolean isTechnician(Long userId) {
+    public static boolean isTechnician(String userId) {
         return USERS.containsKey(userId) && USERS.get(userId).getRole() == UserRole.TECHNICIAN;
     }
 }
+
