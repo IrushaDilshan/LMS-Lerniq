@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Clock3, Filter, PlusCircle, Repeat, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock3, Filter, Pencil, PlusCircle, Repeat, Trash2, XCircle } from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,14 +9,6 @@ const STATUS_COLORS = {
   REJECTED: 'bg-rose-100 text-rose-800',
   CANCELLED: 'bg-slate-200 text-slate-700',
 };
-
-const RESOURCE_OPTIONS = [
-  'Lecture Hall A1',
-  'Conference Room B2',
-  'Computer Lab C3',
-  'Seminar Room D4',
-  'Innovation Hub E5',
-];
 
 const RECURRENCE_OPTIONS = ['DAILY', 'WEEKLY', 'MONTHLY'];
 const DAY_OF_WEEK_OPTIONS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -28,9 +20,11 @@ function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resourceOptions, setResourceOptions] = useState([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
 
   const [form, setForm] = useState({
-    resourceName: RESOURCE_OPTIONS[0],
+    resourceName: '',
     bookingDate: '',
     startTime: '',
     endTime: '',
@@ -59,6 +53,16 @@ function BookingsPage() {
     dayOfMonth: 1,
   });
 
+  const [editModalBooking, setEditModalBooking] = useState(null);
+  const [editForm, setEditForm] = useState({
+    resourceName: '',
+    bookingDate: '',
+    startTime: '',
+    endTime: '',
+    purpose: '',
+    expectedAttendees: 1,
+  });
+
   const sortedBookings = useMemo(() => {
     return [...bookings].sort((a, b) => {
       const da = new Date(`${a.bookingDate}T${a.startTime}`);
@@ -66,6 +70,45 @@ function BookingsPage() {
       return db - da;
     });
   }, [bookings]);
+
+  const firstAvailableResource = resourceOptions[0] || '';
+
+  const editResourceOptions = useMemo(() => {
+    if (!editModalBooking?.resourceName) {
+      return resourceOptions;
+    }
+    if (resourceOptions.includes(editModalBooking.resourceName)) {
+      return resourceOptions;
+    }
+    return [editModalBooking.resourceName, ...resourceOptions];
+  }, [resourceOptions, editModalBooking]);
+
+  const loadResources = async () => {
+    if (!currentUser) {
+      return;
+    }
+
+    setResourcesLoading(true);
+    try {
+      const response = await fetch('/api/resources?activeOnly=true');
+      if (!response.ok) {
+        throw new Error('Failed to load resources.');
+      }
+
+      const data = await response.json();
+      const names = Array.isArray(data)
+        ? [...new Set(data.map((resource) => resource?.name).filter((name) => typeof name === 'string' && name.trim()))]
+        : [];
+
+      setResourceOptions(names);
+    } catch (err) {
+      const message = err?.message || 'Failed to load resources.';
+      setError(message);
+      setResourceOptions([]);
+    } finally {
+      setResourcesLoading(false);
+    }
+  };
 
   const loadBookings = async () => {
     if (!currentUser) {
@@ -101,6 +144,25 @@ function BookingsPage() {
   };
 
   useEffect(() => {
+    loadResources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (resourceOptions.length === 0) {
+      setForm((prev) => ({ ...prev, resourceName: '' }));
+      return;
+    }
+
+    setForm((prev) => {
+      if (prev.resourceName && resourceOptions.includes(prev.resourceName)) {
+        return prev;
+      }
+      return { ...prev, resourceName: resourceOptions[0] };
+    });
+  }, [resourceOptions]);
+
+  useEffect(() => {
     loadBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, filters.status, filters.bookingDate]);
@@ -108,6 +170,11 @@ function BookingsPage() {
   const handleSubmitBooking = async (event) => {
     event.preventDefault();
     setError('');
+
+    if (!form.resourceName) {
+      setError('No active resources are available. Add and activate resources first.');
+      return;
+    }
 
     try {
       await api.post('/bookings', {
@@ -118,7 +185,7 @@ function BookingsPage() {
       });
 
       setForm({
-        resourceName: RESOURCE_OPTIONS[0],
+        resourceName: firstAvailableResource,
         bookingDate: '',
         startTime: '',
         endTime: '',
@@ -146,6 +213,73 @@ function BookingsPage() {
       await loadBookings();
     } catch (err) {
       const message = err?.response?.data?.message || 'Failed to cancel booking.';
+      setError(message);
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this booking?');
+    if (!confirmed) {
+      return;
+    }
+
+    setError('');
+    try {
+      await api.delete(`/bookings/${bookingId}`, {
+        params: {
+          requestingUserId: currentUser.id,
+          requestingRole: currentUser.role,
+        },
+      });
+      await loadBookings();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to delete booking.';
+      setError(message);
+    }
+  };
+
+  const openEditModal = (booking) => {
+    setEditForm({
+      resourceName: booking.resourceName || firstAvailableResource,
+      bookingDate: booking.bookingDate || '',
+      startTime: booking.startTime || '',
+      endTime: booking.endTime || '',
+      purpose: booking.purpose || '',
+      expectedAttendees: booking.expectedAttendees || 1,
+    });
+    setEditModalBooking(booking);
+  };
+
+  const closeEditModal = () => {
+    setEditModalBooking(null);
+  };
+
+  const handleSubmitEditBooking = async (event) => {
+    event.preventDefault();
+    if (!editModalBooking) {
+      return;
+    }
+
+    setError('');
+    try {
+      await api.put(
+        `/bookings/${editModalBooking.id}`,
+        {
+          ...editForm,
+          expectedAttendees: Number(editForm.expectedAttendees),
+        },
+        {
+          params: {
+            requestingUserId: currentUser.id,
+            requestingRole: currentUser.role,
+          },
+        }
+      );
+
+      closeEditModal();
+      await loadBookings();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to update booking.';
       setError(message);
     }
   };
@@ -285,6 +419,12 @@ function BookingsPage() {
         </div>
       )}
 
+      {!resourcesLoading && resourceOptions.length === 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 px-4 py-3 text-sm font-semibold">
+          No active resources found. Add resources in the Resources tab and set them to ACTIVE to enable booking.
+        </div>
+      )}
+
       <section className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-5">
           <PlusCircle className="w-5 h-5 text-blue-600" />
@@ -298,9 +438,10 @@ function BookingsPage() {
               value={form.resourceName}
               onChange={(e) => setForm((prev) => ({ ...prev, resourceName: e.target.value }))}
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 bg-white"
+              disabled={resourcesLoading || resourceOptions.length === 0}
               required
             >
-              {RESOURCE_OPTIONS.map((resource) => (
+              {resourceOptions.map((resource) => (
                 <option key={resource} value={resource}>
                   {resource}
                 </option>
@@ -368,10 +509,11 @@ function BookingsPage() {
           <div className="md:col-span-2">
             <button
               type="submit"
+              disabled={resourcesLoading || resourceOptions.length === 0}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#061224] text-white rounded-xl font-bold hover:bg-[#0d2147] transition-colors"
             >
               <Clock3 className="w-4 h-4" />
-              Submit Request
+              {resourcesLoading ? 'Loading Resources...' : 'Submit Request'}
             </button>
           </div>
         </form>
@@ -406,13 +548,18 @@ function BookingsPage() {
 
             {isAdmin && (
               <>
-                <input
-                  type="text"
+                <select
                   value={filters.resourceName}
                   onChange={(e) => setFilters((prev) => ({ ...prev, resourceName: e.target.value }))}
-                  placeholder="Filter by resource"
                   className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
+                >
+                  <option value="">All Resources</option>
+                  {resourceOptions.map((resource) => (
+                    <option key={resource} value={resource}>
+                      {resource}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={loadBookings}
@@ -445,8 +592,11 @@ function BookingsPage() {
               </thead>
               <tbody>
                 {sortedBookings.map((booking) => {
+                  const isOwner = booking.requestedByUserId === currentUser.id;
                   const canCancel = booking.status === 'APPROVED' && (isAdmin || booking.requestedByUserId === currentUser.id);
-                  const canRepeat = isAdmin || booking.requestedByUserId === currentUser.id;
+                  const canRepeat = isAdmin || isOwner;
+                  const canDelete = isAdmin || isOwner;
+                  const canEdit = booking.status === 'PENDING' && (isAdmin || isOwner);
 
                   return (
                     <tr key={booking.id} className="border-b border-gray-50 align-top">
@@ -462,6 +612,26 @@ function BookingsPage() {
                       <td className="py-3 pr-3 text-gray-600 max-w-[280px]">{booking.adminDecisionReason || '-'}</td>
                       <td className="py-3 pr-3">
                         <div className="flex items-center gap-2">
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(booking)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBooking(booking.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          )}
                           {canRepeat && (
                             <button
                               type="button"
@@ -482,7 +652,7 @@ function BookingsPage() {
                               Cancel
                             </button>
                           )}
-                          {!canRepeat && !canCancel && '-'}
+                          {!canRepeat && !canCancel && !canDelete && !canEdit && '-'}
                         </div>
                       </td>
                     </tr>
@@ -595,6 +765,116 @@ function BookingsPage() {
                 >
                   <Repeat className="w-4 h-4" />
                   Create Repeated Bookings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editModalBooking && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xl font-black text-gray-900">Edit Booking</h3>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-bold"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitEditBooking} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Resource
+                <select
+                  value={editForm.resourceName}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, resourceName: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 bg-white"
+                  disabled={editResourceOptions.length === 0}
+                  required
+                >
+                  {editResourceOptions.map((resource) => (
+                    <option key={resource} value={resource}>
+                      {resource}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Date
+                <input
+                  type="date"
+                  value={editForm.bookingDate}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, bookingDate: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Start Time
+                <input
+                  type="time"
+                  value={editForm.startTime}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                End Time
+                <input
+                  type="time"
+                  value={editForm.endTime}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700 md:col-span-2">
+                Purpose
+                <input
+                  type="text"
+                  value={editForm.purpose}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, purpose: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1 text-sm font-semibold text-gray-700">
+                Expected Attendees
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.expectedAttendees}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, expectedAttendees: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5"
+                  required
+                />
+              </label>
+
+              <div className="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editResourceOptions.length === 0}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Save Changes
                 </button>
               </div>
             </form>
